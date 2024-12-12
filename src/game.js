@@ -1,20 +1,16 @@
-/*
-    Little JS Module Demo
-    - A simple starter project
-    - Shows how to use LittleJS with modules
-*/
+"use strict";
 
-'use strict';
+import * as LittleJS from "littlejsengine";
+import loadLevel from "./gameLevel.js";
 
-// import module
-import * as LittleJS from 'littlejsengine';
+import tilesUrl from "./assets/tiles.png";
+import Player from "./Player/Player.js";
+import playerSpritesheet from "./Player/gorilla.png";
 
-import tilesUrl from './assets/tiles.png';
-
-const {tile, vec2, hsl} = LittleJS;
+const {vec2} = LittleJS;
 
 // show the LittleJS splash screen
-LittleJS.setShowSplashScreen(true);
+//LittleJS.setShowSplashScreen(true);
 
 // fix texture bleeding by shrinking tile slightly
 LittleJS.setTileFixBleedScale(.5);
@@ -23,115 +19,73 @@ LittleJS.setTileFixBleedScale(.5);
 const sound_click = new LittleJS.Sound([1,.5]);
 
 // medals
-const medal_example = new LittleJS.Medal(0, 'Example Medal', 'Welcome to LittleJS!');
-LittleJS.medalsInit('Hello World');
+const medal_example = new LittleJS.Medal(0, "Example Medal", "Welcome to LittleJS!");
+LittleJS.medalsInit("Hello World");
 
 // game variables
-let particleEmitter;
+const bgColor = new LittleJS.Color(0, 132 / 255, 86 / 255);
+let player;
+let score = 0;
+let highScore = 1000000;
 
 ///////////////////////////////////////////////////////////////////////////////
-function gameInit()
-{
-    // create tile collision and visible tile layer
-    const tileCollisionSize = vec2(32, 16);
-    LittleJS.initTileCollision(tileCollisionSize);
-    const pos = vec2();
-    const tileLayer = new LittleJS.TileLayer(pos, tileCollisionSize);
-
-    // get level data from the tiles image
-    const mainContext = LittleJS.mainContext;
-    const tileImage = LittleJS.textureInfos[0].image;
-    mainContext.drawImage(tileImage, 0, 0);
-    const imageData = mainContext.getImageData(0,0,tileImage.width,tileImage.height).data;
-    for (pos.x = tileCollisionSize.x; pos.x--;)
-    for (pos.y = tileCollisionSize.y; pos.y--;)
-    {
-        // check if this pixel is set
-        const i = pos.x + tileImage.width*(15 + tileCollisionSize.y - pos.y);
-        if (!imageData[4*i])
-            continue;
-        
-        // set tile data
-        const tileIndex = 1;
-        const direction = LittleJS.randInt(4)
-        const mirror = !LittleJS.randInt(2);
-        const color = LittleJS.randColor();
-        const data = new LittleJS.TileLayerData(tileIndex, direction, mirror, color);
-        tileLayer.setData(pos, data);
-        LittleJS.setTileCollisionData(pos, 1);
-    }
-
-    // draw tile layer with new data
-    tileLayer.redraw();
-
-    // move camera to center of collision
-    LittleJS.setCameraPos(tileCollisionSize.scale(.5));
-    LittleJS.setCameraScale(48);
+function gameInit(){
+    LittleJS.setCanvasPixelated(true);
+    //LittleJS.setCanvasMaxSize(vec2(256, 224));
+    LittleJS.setCanvasFixedSize(vec2(256, 224));
+    LittleJS.setCameraScale(1);
+    LittleJS.setTileSizeDefault(vec2(16, 16));
+    LittleJS.setObjectMaxSpeed(8);
+    
+    loadLevel();
 
     // enable gravity
-    LittleJS.setGravity(-.01);
+    LittleJS.setGravity(-.6);
 
-    // create particle emitter
-    particleEmitter = new LittleJS.ParticleEmitter(
-        vec2(16,9), 0,              // emitPos, emitAngle
-        1, 0, 500, Math.PI,         // emitSize, emitTime, emitRate, emiteCone
-        tile(0, 16),                // tileIndex, tileSize
-        hsl(1,1,1),   hsl(0,0,0),   // colorStartA, colorStartB
-        hsl(0,0,0,0), hsl(0,0,0,0), // colorEndA, colorEndB
-        2, .2, .2, .1, .05,   // time, sizeStart, sizeEnd, speed, angleSpeed
-        .99, 1, 1, Math.PI,   // damping, angleDamping, gravityScale, cone
-        .05, .5, true, true   // fadeRate, randomness, collide, additive
-    );
-    particleEmitter.elasticity = .3; // bounce when it collides
-    particleEmitter.trailScale = 2;  // stretch in direction of motion
+    player = new Player(vec2(96, 32));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-function gameUpdate()
-{
-    if (LittleJS.mouseWasPressed(0))
-    {
+function gameUpdate(){
+    if (LittleJS.mouseWasPressed(0)){
         // play sound when mouse is pressed
         sound_click.play(LittleJS.mousePos);
-
-        // change particle color and set to fade out
-        particleEmitter.colorStartA = hsl();
-        particleEmitter.colorStartB = LittleJS.randColor();
-        particleEmitter.colorEndA = particleEmitter.colorStartA.scale(1,0);
-        particleEmitter.colorEndB = particleEmitter.colorStartB.scale(1,0);
 
         // unlock medals
         medal_example.unlock();
     }
 
-    // move particles to mouse location if on screen
-    if (LittleJS.mousePosScreen.x)
-        particleEmitter.pos = LittleJS.mousePos;
+    LittleJS.setCameraPos(vec2(player.pos.x, LittleJS.canvasFixedSize.y / 2));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-function gameUpdatePost()
-{
+function gameUpdatePost(){
 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-function gameRender()
-{
-    // draw a grey square in the background without using webgl
-    LittleJS.drawRect(vec2(16,8), vec2(20,14), hsl(0,0,.6), 0, false);
-    
-    // draw the logo as a tile
-    LittleJS.drawTile(vec2(21,5), vec2(4.5), tile(3,128));
+function gameRender(){
+    LittleJS.drawRect(vec2(128, 112), vec2(256, 224), bgColor, 0, false, true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-function gameRenderPost()
-{
+function gameRenderPost(){
     // draw to overlay canvas for hud rendering
-    LittleJS.drawTextScreen('LittleJS with Modules', vec2(LittleJS.mainCanvasSize.x/2, 80), 80);
+    const drawText = (text, x, y, size=8, textAlign="left") =>
+    {
+        LittleJS.overlayContext.textAlign = textAlign;
+        LittleJS.overlayContext.textBaseline = "top";
+        LittleJS.overlayContext.font = size + "px 'PressStart2P'";
+        LittleJS.overlayContext.fillStyle = "#fff";
+        LittleJS.overlayContext.fillText(text, x, y);
+    }
+    // Score GUI
+    drawText("1P", 16, 16);
+    drawText(score, 96, 16, 8, "right");
+    drawText("TOP", LittleJS.overlayCanvas.width - 104, 16, 8, "left");
+    drawText(highScore, LittleJS.overlayCanvas.width - 16, 16, 8, "right");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Startup LittleJS Engine
-LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl]);
+LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl, playerSpritesheet]);
