@@ -33,16 +33,16 @@ function gameInit(){
     LittleJS.setCanvasPixelated(true);
     //LittleJS.setCanvasMaxSize(vec2(256, 224));
     LittleJS.setCanvasFixedSize(vec2(256, 224));
-    LittleJS.setCameraScale(1);
+    LittleJS.setCameraScale(16);
     LittleJS.setTileSizeDefault(vec2(16, 16));
-    LittleJS.setObjectMaxSpeed(8);
+    //LittleJS.setObjectMaxSpeed(8);
     
     loadLevel();
 
     // enable gravity
-    LittleJS.setGravity(-.6);
+    LittleJS.setGravity(-.0375);
 
-    player = new Player(vec2(96, 32));
+    player = new Player(vec2(6, 2));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,7 +55,7 @@ function gameUpdate(){
         medal_example.unlock();
     }
 
-    LittleJS.setCameraPos(vec2(player.pos.x, LittleJS.canvasFixedSize.y / 2));
+    LittleJS.setCameraPos(vec2(player.pos.x, (LittleJS.canvasFixedSize.y / 2 / LittleJS.tileSizeDefault.y)));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

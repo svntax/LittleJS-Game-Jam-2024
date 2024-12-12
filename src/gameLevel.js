@@ -12,7 +12,7 @@ export default function loadLevel(level=0){
     const layerCount = tileMapData.layers.length;
     for (let layer=layerCount; layer--;){
         const layerData = tileMapData.layers[layer].data;
-        const tileLayer = new TileLayer(vec2(), levelSize, LittleJS.tile(0,tileMapData.tilewidth,0), vec2(tileMapData.tilewidth, tileMapData.tileheight));
+        const tileLayer = new TileLayer(vec2(), levelSize, LittleJS.tile(0,tileMapData.tilewidth,0));
 
         for (let x=levelSize.x; x--;) 
         for (let y=levelSize.y; y--;)

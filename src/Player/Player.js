@@ -7,20 +7,20 @@ class Player extends EngineObject {
         super(pos);
 
         this.velocity = vec2(0, 0);
-        this.moveSpeed = 1;
+        this.moveSpeed = 0.0625;
         
-        this.drawSize = vec2(32, 32);
+        this.drawSize = vec2(2); // Tiles are 16x16 but the sprite is 32x32
         this.tileInfo = LittleJS.tile(1, 32, 1);
         this.color = LittleJS.WHITE;
         this.mirror = false;
         this.setCollision(true, false);
+        this.onGround = false;
     }
 
     render(){
         let bodyPos = this.pos;
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y - this.size.y) / 2));
         LittleJS.drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, 0, this.mirror);
-        LittleJS.drawCircle(this.pos, 1, LittleJS.RED, 1, LittleJS.RED);
     }
 
     update(){
@@ -36,22 +36,22 @@ class Player extends EngineObject {
             this.mirror = (this.moveInput.x < 0);
         }
 
-        if(this.jumpPressed){
-            this.velocity.y = 7;
+        if(this.jumpPressed && this.onGround){
+            this.velocity.y = 0.4375;
         }
 
         // Floaty jump
-        if(this.velocity.y > 2){
+        if(this.velocity.y > 0.125){
             this.gravityScale = 0.9;
         }
-        else if(LittleJS.abs(this.velocity.y) <= 2){
+        else if(LittleJS.abs(this.velocity.y) <= 0.125){
             this.gravityScale = 0.4;
         }
         else{
             this.gravityScale = 1;
         }
 
-        this.velocity.y = clamp(this.velocity.y, -2, LittleJS.objectMaxSpeed);
+        this.velocity.y = clamp(this.velocity.y, -0.125, LittleJS.objectMaxSpeed);
 
         // Lower map bound
         const lowerBoundY = -16;
@@ -61,7 +61,7 @@ class Player extends EngineObject {
         }
         
         // apply movement acceleration and clamp
-        const maxCharacterSpeed = 2;
+        const maxCharacterSpeed = 0.125;
         this.velocity.x = clamp(this.velocity.x + this.moveInput.x * this.moveSpeed, -maxCharacterSpeed, maxCharacterSpeed);
 
         // air control
@@ -70,6 +70,14 @@ class Player extends EngineObject {
         }
         else{
             this.velocity.x *= .5; // moving against velocity (stopping)
+        }
+
+        const raycastHit = LittleJS.tileCollisionRaycast(this.pos, this.pos.add(vec2(0, -1)), this);
+        if(raycastHit){
+            this.onGround = true;
+        }
+        else{
+            this.onGround = false;
         }
 
         super.update();
