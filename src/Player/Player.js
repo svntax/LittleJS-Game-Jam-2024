@@ -57,13 +57,13 @@ class Player extends EngineObject {
             this.gravityScale = 0.9;
         }
         else if(LittleJS.abs(this.velocity.y) <= 0.125){
-            this.gravityScale = 0.4;
+            this.gravityScale = 0.5;
         }
         else{
-            this.gravityScale = 1;
+            this.gravityScale = 0.75;
         }
 
-        this.velocity.y = clamp(this.velocity.y, -0.125, LittleJS.objectMaxSpeed);
+        this.velocity.y = clamp(this.velocity.y, -0.165, LittleJS.objectMaxSpeed);
 
         // Lower map bound
         const lowerBoundY = -16;
