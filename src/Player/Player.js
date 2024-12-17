@@ -10,6 +10,7 @@ class Player extends EngineObject {
 
         this.velocity = vec2(0, 0);
         this.moveSpeed = 0.0625;
+        this.maxSpeed = 0.125;
         
         this.drawSize = vec2(2); // Tiles are 16x16 but the sprite is 32x32
         this.size = vec2(1.5, 0.75);
@@ -77,8 +78,7 @@ class Player extends EngineObject {
         }
         
         // apply movement acceleration and clamp
-        const maxCharacterSpeed = 0.125;
-        this.velocity.x = clamp(this.velocity.x + this.moveInput.x * this.moveSpeed, -maxCharacterSpeed, maxCharacterSpeed);
+        this.velocity.x = clamp(this.velocity.x + this.moveInput.x * this.moveSpeed, -this.maxSpeed, this.maxSpeed);
 
         // air control
         if (sign(this.moveInput.x) == sign(this.velocity.x)){

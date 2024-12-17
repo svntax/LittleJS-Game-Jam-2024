@@ -6,6 +6,7 @@ import loadLevel from "./gameLevel.js";
 import tilesUrl from "./assets/tiles.png";
 import Player from "./Player/Player.js";
 import playerSpritesheet from "./Player/gorilla.png";
+import ChaseEnemy from "./Enemies/ChaseEnemy.js";
 
 const {vec2} = LittleJS;
 
@@ -24,7 +25,7 @@ LittleJS.medalsInit("Hello World");
 
 // game variables
 const bgColor = new LittleJS.Color(0, 132 / 255, 86 / 255);
-let player;
+export let player;
 let score = 0;
 let highScore = 1000000;
 
@@ -43,6 +44,9 @@ function gameInit(){
     LittleJS.setGravity(-.0375);
 
     player = new Player(vec2(6, 2));
+
+    // TODO: test enemy, use spawn points later
+    const testEnemy = new ChaseEnemy(vec2(10, 2));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
