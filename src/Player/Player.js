@@ -21,6 +21,8 @@ class Player extends EngineObject {
         this.onGround = false;
         this.jumpTimer = new Timer();
         this.isJumping = false;
+        this.isDead = false;
+        this.isSolid = true;
     }
 
     render(){
@@ -81,7 +83,7 @@ class Player extends EngineObject {
         this.velocity.x = clamp(this.velocity.x + this.moveInput.x * this.moveSpeed, -this.maxSpeed, this.maxSpeed);
 
         // air control
-        if (sign(this.moveInput.x) == sign(this.velocity.x)){
+        if(sign(this.moveInput.x) == sign(this.velocity.x)){
             this.velocity.x *= .8; // moving with velocity
         }
         else{

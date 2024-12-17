@@ -2,7 +2,7 @@ import * as LittleJS from "littlejsengine";
 const { EngineObject, Timer, vec2, clamp, sign } = LittleJS;
 
 import { roomWidthInTiles } from "../gameLevel";
-import { player } from "../game.js";
+import { player, enemyDied } from "../game.js";
 
 class EnemyState {
     static get CHASE(){
@@ -11,14 +11,22 @@ class EnemyState {
     static get JUMP(){
         return "JUMP";
     }
+    static get DEAD(){
+        return "DEAD";
+    }
+    static get SPAWNING(){
+        return "SPAWNING";
+    }
 }
 
 class ChaseEnemy extends EngineObject {
     constructor(pos){
         super(pos);
+        this.isEnemy = true;
 
         this.velocity = vec2(0, 0);
         this.moveSpeed = 0.0625;
+        this.moveInput = vec2(1, 0);
         this.chaseMaxSpeed = 0.09;
         this.jumpMaxSpeed = 0.26;
         this.highJumpPower = 0.4375;
@@ -30,21 +38,26 @@ class ChaseEnemy extends EngineObject {
         this.tileInfo = LittleJS.tile(1, 32, 1);
         this.color = LittleJS.WHITE;
         this.mirror = false;
-        this.setCollision(true, false);
+        this.setCollision(false, false);
+
         this.onGround = false;
         this.isJumping = false;
         this.jumpTimer = new Timer();
-        this.state = EnemyState.CHASE;
-        this.moveInput = vec2(1, 0);
+
+        this.spawningTimer = new Timer();
+        this.deathTimer = new Timer();
+        this.deathSpinTimer = new Timer();
+
+        this.enterState(EnemyState.SPAWNING);
     }
 
     render(){
         let bodyPos = this.pos;
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y - this.size.y) / 2));
-        LittleJS.drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, 0, this.mirror);
+        LittleJS.drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
         // Draw copies of the sprite on both sides off screen to make the warping effect seamless.
-        LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, 0, this.mirror);
-        LittleJS.drawTile(bodyPos.add(vec2(roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, 0, this.mirror);
+        LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+        LittleJS.drawTile(bodyPos.add(vec2(roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
     }
 
     calculateMoveDirection(){
@@ -100,6 +113,18 @@ class ChaseEnemy extends EngineObject {
             this.jumpTimer.set(1);
             this.maxSpeed = this.jumpMaxSpeed;
         }
+        else if(nextState === EnemyState.DEAD){
+            this.jumpTimer.unset();
+            this.spawningTimer.unset();
+            this.maxSpeed = 0.25;
+            this.moveInput.x = -this.calculateMoveDirection();
+            this.velocity.x = this.moveInput.x * this.maxSpeed;
+            this.deathTimer.set(2.5);
+            this.setCollision(false, false, true);
+        }
+        else if(nextState === EnemyState.SPAWNING){
+            this.spawningTimer.set(2);
+        }
     }
 
     updateJump(){
@@ -146,12 +171,44 @@ class ChaseEnemy extends EngineObject {
         this.isJumping = true;
     }
 
+    updateDead(){
+        if(!this.deathSpinTimer.active()){
+            this.deathSpinTimer.set(0.15 * (1 - this.maxSpeed / 0.35));
+            const spinAmount = 90 * (LittleJS.PI / 180);
+            this.angle += spinAmount * (this.mirror ? -1 : 1);
+        }
+        if(!this.deathTimer.active()){
+            enemyDied({"spawnId": this.spawnId});
+            this.destroy();
+        }
+    }
+
+    updateSpawning(){
+        this.moveInput.x = 0;
+        this.velocity.x = 0;
+        if(!this.spawningTimer.active()){
+            this.moveInput.x = this.calculateMoveDirection();
+            this.setCollision(true, false);
+            this.enterState(EnemyState.CHASE);
+        }
+    }
+
+    canTakeDamage(){
+        return this.state !== EnemyState.SPAWNING && this.state !== EnemyState.DEAD;
+    }
+
     update(){
         if(this.state === EnemyState.CHASE){
             this.updateChase();
         }
         else if(this.state === EnemyState.JUMP){
             this.updateJump();
+        }
+        else if(this.state === EnemyState.DEAD){
+            this.updateDead();
+        }
+        else if(this.state === EnemyState.SPAWNING){
+            this.updateSpawning();
         }
         
         if(this.moveInput.x !== 0){
@@ -186,11 +243,16 @@ class ChaseEnemy extends EngineObject {
         this.velocity.x = clamp(this.velocity.x + this.moveInput.x * this.moveSpeed, -this.maxSpeed, this.maxSpeed);
 
         // air control
-        if (sign(this.moveInput.x) == sign(this.velocity.x)){
-            this.velocity.x *= .8; // moving with velocity
+        if(this.state === EnemyState.DEAD){
+            this.maxSpeed *= .965;
         }
         else{
-            this.velocity.x *= .5; // moving against velocity (stopping)
+            if (sign(this.moveInput.x) == sign(this.velocity.x)){
+                this.velocity.x *= .8; // moving with velocity
+            }
+            else{
+                this.velocity.x *= .5; // moving against velocity (stopping)
+            }
         }
 
         // Check if on ground
@@ -220,6 +282,19 @@ class ChaseEnemy extends EngineObject {
     }
 
     collideWithTile(data, pos){
+        return true;
+    }
+
+    collideWithObject(object){
+        if(object.isEnemy){
+            // Enemies shouldn't collide with each other.
+            return false;
+        }
+        if(object === player && this.canTakeDamage()){
+            // TODO: testing DEAD state, change to trigger from attacks only
+            this.enterState(EnemyState.DEAD);
+            return false;
+        }
         return true;
     }
 }

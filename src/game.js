@@ -28,6 +28,7 @@ const bgColor = new LittleJS.Color(0, 132 / 255, 86 / 255);
 export let player;
 let score = 0;
 let highScore = 1000000;
+const enemySpawnPoints = [];
 
 ///////////////////////////////////////////////////////////////////////////////
 function gameInit(){
@@ -38,15 +39,28 @@ function gameInit(){
     LittleJS.setTileSizeDefault(vec2(16, 16));
     //LittleJS.setObjectMaxSpeed(8);
     
-    loadLevel();
+    const levelData = loadLevel();
 
     // enable gravity
     LittleJS.setGravity(-.0375);
 
-    player = new Player(vec2(6, 2));
+    player = new Player(levelData.playerSpawn);
 
-    // TODO: test enemy, use spawn points later
-    const testEnemy = new ChaseEnemy(vec2(10, 2));
+    // Spawn enemies in the loaded level
+    for(let i = 0; i < levelData.enemySpawns.length; i++){
+        const enemySpawn = levelData.enemySpawns[i].add(vec2(1, 0.5));
+        const enemy = new ChaseEnemy(enemySpawn);
+        enemy.spawnId = i;
+        enemySpawnPoints[i] = {
+            "spawnPosition": enemySpawn
+        };
+    }
+}
+
+export function enemyDied(enemy){
+    const enemySpawn = enemySpawnPoints[enemy.spawnId].spawnPosition;
+    const newEnemy = new ChaseEnemy(enemySpawn);
+    newEnemy.spawnId = enemy.spawnId;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
