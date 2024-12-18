@@ -27,7 +27,7 @@ LittleJS.medalsInit("Hello World");
 const bgColor = new LittleJS.Color(0, 132 / 255, 86 / 255);
 export let player;
 let score = 0;
-let highScore = 1000000;
+let highScore = 0;
 const enemySpawnPoints = [];
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -61,6 +61,13 @@ export function enemyDied(enemy){
     const enemySpawn = enemySpawnPoints[enemy.spawnId].spawnPosition;
     const newEnemy = new ChaseEnemy(enemySpawn);
     newEnemy.spawnId = enemy.spawnId;
+}
+
+export function addScore(amount){
+    score += amount;
+    if(score > highScore){
+        highScore = score;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

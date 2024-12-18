@@ -1,8 +1,9 @@
 import * as LittleJS from "littlejsengine";
 const { EngineObject, Timer, vec2, clamp, sign } = LittleJS;
 
+import TextPopup from "../TextPopup.js";
 import { roomWidthInTiles } from "../gameLevel";
-import { player, enemyDied } from "../game.js";
+import { player, enemyDied, addScore } from "../game.js";
 
 class EnemyState {
     static get CHASE(){
@@ -23,6 +24,7 @@ class ChaseEnemy extends EngineObject {
     constructor(pos){
         super(pos);
         this.isEnemy = true;
+        this.pointsValue = 200;
 
         this.velocity = vec2(0, 0);
         this.moveSpeed = 0.0625;
@@ -121,6 +123,11 @@ class ChaseEnemy extends EngineObject {
             this.velocity.x = this.moveInput.x * this.maxSpeed;
             this.deathTimer.set(2.5);
             this.setCollision(false, false, true);
+            // Score popup effect
+            const scorePopup = new TextPopup(this.pos);
+            scorePopup.text = this.pointsValue;
+            scorePopup.offset = vec2(0, 1);
+            addScore(this.pointsValue);
         }
         else if(nextState === EnemyState.SPAWNING){
             this.spawningTimer.set(2);
@@ -178,6 +185,7 @@ class ChaseEnemy extends EngineObject {
             this.angle += spinAmount * (this.mirror ? -1 : 1);
         }
         if(!this.deathTimer.active()){
+            // Remove enemy and signal to the game that this enemy died.
             enemyDied({"spawnId": this.spawnId});
             this.destroy();
         }
