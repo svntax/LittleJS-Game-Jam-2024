@@ -20,7 +20,12 @@ const {vec2, Timer} = LittleJS;
 LittleJS.setTileFixBleedScale(.5);
 
 // sound effects
-const sound_click = new LittleJS.Sound([1,.5]);
+const bonusLifeSound = new LittleJS.Sound([.6,,269,.03,.17,.41,,.2,,1,239,.08,.04,,,,,.72,.19,.43,-720]);
+export const pickupSound = new LittleJS.Sound([0.8,0,413,.03,.05,.05,,1.8,,19,177,.05,,,,,,.83,.02]);
+export const collectedSound = new LittleJS.Sound([1.1,0,450,,.01,.13,,2.7,,-9.5,500,.08,,,,,,.89]);
+const playerDiedSound = new LittleJS.Sound([0.7,0,344,.01,.02,.28,1,1.4,,,50,,,,.3,.2,.15,.6,.06]);
+const levelCompleteMusic = new LittleJS.Music([[[,0,400,,,,,1.6]],[[[,,1,5,8,13,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]]],[0],250,{"title":"Level Complete","instruments":["Instrument 0"],"patterns":["Pattern 0"]}]);
+const gameOverMusic = new LittleJS.Music([[[1.3,0,130.8128,.03,.74,.5,1,3.9,,,,,,.3,,,,.31]],[[[,,4,,,,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]]],[0],100,{"title":"Game Over","instruments":["Instrument 0"],"patterns":["Pattern 0"]}]);
 
 // medals
 const medal_example = new LittleJS.Medal(0, "Example Medal", "Welcome to LittleJS!");
@@ -32,6 +37,8 @@ export let player;
 let lives = 2;
 let score = 0;
 let levelCompletePoints = 5000;
+const bonusLifeTiers = [10000, 20000, 40000, 60000, 100000];
+let currentBonusLifeIndex = 0;
 let highScore = 0;
 let currentLevel = 1;
 let enemySpawnPoints = [];
@@ -129,6 +136,7 @@ export function enemyDied(enemy){
 }
 
 export function playerDied(){
+    playerDiedSound.play();
     restartLevel();
 }
 
@@ -136,6 +144,15 @@ export function addScore(amount){
     score += amount;
     if(score > highScore){
         highScore = score;
+    }
+    // Bonus life calculation
+    if(score >= bonusLifeTiers[currentBonusLifeIndex]){
+        lives++;
+        bonusLifeSound.play();
+        currentBonusLifeIndex++;
+        if(currentBonusLifeIndex >= bonusLifeTiers.length){
+            currentBonusLifeIndex = bonusLifeTiers.length - 1;
+        }
     }
 }
 
@@ -169,6 +186,8 @@ export function respawnPlayer(){
         lives = 0;
         gameOverTimer.set(3);
         gameState = State.GAME_OVER;
+        gameOverMusic.setVolume(1.2);
+        gameOverMusic.play();
     }
     else{
         playTransition(0.25);
@@ -202,6 +221,7 @@ export function isLevelComplete(){
         }
     }
     if(allGorillasSaved){
+        levelCompleteMusic.play();
         isLoadingNextLevel = true;
         addScore(levelCompletePoints);
         nextLevelTimer.set(3);
@@ -228,11 +248,9 @@ function playTransition(transitionTime){
 ///////////////////////////////////////////////////////////////////////////////
 function gameUpdate(){
     if (LittleJS.mouseWasPressed(0)){
-        // play sound when mouse is pressed
-        sound_click.play(LittleJS.mousePos);
 
         // unlock medals
-        medal_example.unlock();
+        //medal_example.unlock();
     }
 
     LittleJS.setCameraPos(vec2(player.pos.x, (LittleJS.canvasFixedSize.y / 2 / LittleJS.tileSizeDefault.y)));
@@ -285,8 +303,8 @@ function gameRenderPost(){
 
     // Level complete GUI
     if(isLoadingNextLevel){
-        drawText("LEVEL COMPLETE", LittleJS.overlayCanvas.width / 2, 96, 8, "center");
-        drawText("BONUS " + levelCompletePoints, LittleJS.overlayCanvas.width / 2, 108, 8, "center");
+        drawText("LEVEL COMPLETE", LittleJS.overlayCanvas.width / 2, 100, 8, "center");
+        drawText("BONUS " + levelCompletePoints, LittleJS.overlayCanvas.width / 2, 112, 8, "center");
     }
 
     // Player lives

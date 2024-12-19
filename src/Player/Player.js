@@ -4,7 +4,7 @@ const { EngineObject, Timer, vec2, keyWasPressed, keyIsDown, gamepadWasPressed, 
 
 import TextPopup from "../TextPopup.js";
 import { roomWidthInTiles } from "../gameLevel";
-import { addScore, playerDied, respawnPlayer, isLevelComplete } from "../game";
+import { addScore, playerDied, respawnPlayer, isLevelComplete, pickupSound, collectedSound } from "../game";
 
 // Points awarded when saving a small gorilla. Higher points if more are saved at a time.
 const gorillaSavedPoints = [100, 200, 300, 400, 500, 1000, 2000, 5000];
@@ -113,6 +113,7 @@ class Player extends EngineObject {
                 nextGorilla.collectAndSave(); // This function leads to heldGorillas decreasing already, so no need to decrease it here.
                 const nextScore = gorillaSavedPoints[this.savedGorillaIndex];
                 addScore(nextScore);
+                collectedSound.play();
                 // Score popup effect
                 const scorePopup = new TextPopup(this.pos);
                 scorePopup.text = nextScore;
@@ -240,6 +241,7 @@ class Player extends EngineObject {
             addScore(10);
         }
         this.heldGorillas++;
+        pickupSound.play();
     }
 
     removeGorilla(smallGorilla){
