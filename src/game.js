@@ -31,6 +31,7 @@ const bgColor = new LittleJS.Color(0, 61 / 255, 16 / 255);
 export let player;
 let lives = 2;
 let score = 0;
+let levelCompletePoints = 5000;
 let highScore = 0;
 let currentLevel = 1;
 let enemySpawnPoints = [];
@@ -50,6 +51,8 @@ class State {
 }
 let gameState = State.GAMEPLAY;
 let gameOverTimer = new Timer();
+let isLoadingNextLevel = false;
+let nextLevelTimer = new Timer();
 let transitionScreenTimer = new Timer();
 let showingTransition = false;
 
@@ -80,6 +83,7 @@ function startGame(){
     currentLevel = 1;
     enemySpawnPoints = [];
     currentLevelData = {};
+    isLoadingNextLevel = false;
 
     currentLevelData = loadLevel(currentLevel);
 
@@ -94,6 +98,7 @@ function startGame(){
 }
 
 function startNextLevel(){
+    isLoadingNextLevel = false;
     LittleJS.engineObjectsDestroy();
 
     playTransition(0.25);
@@ -197,7 +202,20 @@ export function isLevelComplete(){
         }
     }
     if(allGorillasSaved){
-        startNextLevel();
+        isLoadingNextLevel = true;
+        addScore(levelCompletePoints);
+        nextLevelTimer.set(3);
+        // Remove all enemies
+        for(let i = 0; i < LittleJS.engineObjects.length; i++){
+            const object = LittleJS.engineObjects[i];
+            if(object.isEnemy){
+                object.queueRemove();
+            }
+        }
+        return true;
+    }
+    else{
+        return false;
     }
 }
 
@@ -222,6 +240,12 @@ function gameUpdate(){
     if(gameState === State.GAME_OVER){
         if(!gameOverTimer.active()){
             startGame();
+        }
+    }
+
+    if(isLoadingNextLevel){
+        if(!nextLevelTimer.active()){
+            startNextLevel();
         }
     }
 
@@ -258,6 +282,12 @@ function gameRenderPost(){
     drawText(score, 96, 16, 8, "right");
     drawText("TOP", LittleJS.overlayCanvas.width - 104, 16, 8, "left");
     drawText(highScore, LittleJS.overlayCanvas.width - 16, 16, 8, "right");
+
+    // Level complete GUI
+    if(isLoadingNextLevel){
+        drawText("LEVEL COMPLETE", LittleJS.overlayCanvas.width / 2, 96, 8, "center");
+        drawText("BONUS " + levelCompletePoints, LittleJS.overlayCanvas.width / 2, 108, 8, "center");
+    }
 
     // Player lives
     const lifeIconTile = LittleJS.tile(7, 16, 0);

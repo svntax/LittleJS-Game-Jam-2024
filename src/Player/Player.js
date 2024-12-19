@@ -34,6 +34,7 @@ class Player extends EngineObject {
         this.angle = 0;
         this.isPlayingDeathAnimation = false;
         this.isRespawning = false;
+        this.finishedLevel = false;
 
         this.heldGorillas = 0;
         this.heldGorillasList = [];
@@ -71,11 +72,11 @@ class Player extends EngineObject {
             return this.isPlayingDeathAnimation;
         }
 
-        return true;
+        return !this.finishedLevel;
     }
 
     canMove(){
-        return !this.isDead;
+        return !this.isDead && !this.finishedLevel;
     }
 
     deadUpdate(){
@@ -125,13 +126,9 @@ class Player extends EngineObject {
                 this.savedGorillaIndex = 0;
                 this.heldGorillasList = [];
                 if(isLevelComplete()){
-                    nextLevel();
-                    // Hacky way to keep the player frozen
-                    this.saveGorillaTimer.set(10);
+                    this.finishedLevel = true;
                 }
-                else{
-                    this.savingGorillas = false;
-                }
+                this.savingGorillas = false;
             }
         }
     }
@@ -219,6 +216,11 @@ class Player extends EngineObject {
         // Saving state interrupts movement logic here
         if(this.savingGorillas){
             this.savingGorillasUpdate();
+        }
+        if(this.finishedLevel){
+            this.velocity.x = 0;
+            this.velocity.y = 0;
+            this.gravityScale = 0;
         }
 
         // Seamless room warping effect
