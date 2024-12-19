@@ -3,6 +3,7 @@ const { EngineObject, Timer, vec2, keyWasPressed, keyIsDown, gamepadWasPressed, 
     clamp, sign } = LittleJS;
 
 import { roomWidthInTiles } from "../gameLevel";
+import { addScore, playerDied } from "../game";
 
 class Player extends EngineObject {
     constructor(pos){
@@ -23,6 +24,10 @@ class Player extends EngineObject {
         this.isJumping = false;
         this.isDead = false;
         this.isSolid = true;
+
+        this.heldGorillas = 0;
+        this.renderOrder = 5;
+        this.smallGorillaTileInfo = LittleJS.tile(1, 16, 2); // Held frame
     }
 
     render(){
@@ -32,6 +37,16 @@ class Player extends EngineObject {
         // Draw copies of the player on both sides off screen to make the warping effect seamless.
         LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, 0, this.mirror);
         LittleJS.drawTile(bodyPos.add(vec2(roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, 0, this.mirror);
+
+        const smallGorillaDrawSize = vec2(1);
+        for(let i = 0; i < this.heldGorillas; i++){
+            const stackPos = this.pos.add(vec2(0, i*0.25 + 0.5625));
+            // Draw the stack of held gorillas
+            LittleJS.drawTile(stackPos, smallGorillaDrawSize, this.smallGorillaTileInfo, this.color, 0, this.mirror);
+            // Draw copies of the sprite on both sides off screen to make the warping effect seamless.
+            LittleJS.drawTile(stackPos.add(vec2(-roomWidthInTiles, 0)), smallGorillaDrawSize, this.smallGorillaTileInfo, this.color, 0, this.mirror);
+            LittleJS.drawTile(stackPos.add(vec2(roomWidthInTiles, 0)), smallGorillaDrawSize, this.smallGorillaTileInfo, this.color, 0, this.mirror);
+        }
     }
 
     update(){
@@ -116,6 +131,34 @@ class Player extends EngineObject {
         }
 
         super.update();
+    }
+
+    addGorilla(smallGorilla){
+        if(smallGorilla.wasNeverPickedUp){
+            smallGorilla.wasNeverPickedUp = false;
+            addScore(10);
+        }
+        this.heldGorillas++;
+    }
+
+    removeGorilla(smallGorilla){
+        this.heldGorillas--;
+    }
+
+    damage(){
+        if(this.isDead){
+            return;
+        }
+        
+        this.isDead = true;
+        for(let i = 0; i < LittleJS.engineObjects.length; i++){
+            const object = LittleJS.engineObjects[i];
+            if(object.isSmallGorilla){
+                object.dropFromPlayer();
+            }
+        }
+        this.heldGorillas = 0;
+        playerDied();
     }
 
     collideWithTile(data, pos){

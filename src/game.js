@@ -6,7 +6,9 @@ import loadLevel from "./gameLevel.js";
 import tilesUrl from "./assets/tiles.png";
 import Player from "./Player/Player.js";
 import playerSpritesheet from "./Player/gorilla.png";
+import smallGorillaSpritesheet from "./Items/small_gorilla.png";
 import ChaseEnemy from "./Enemies/ChaseEnemy.js";
+import SmallGorilla from "./Items/SmallGorilla.js";
 
 const {vec2} = LittleJS;
 
@@ -29,6 +31,7 @@ export let player;
 let score = 0;
 let highScore = 0;
 const enemySpawnPoints = [];
+let currentLevelData = {};
 
 ///////////////////////////////////////////////////////////////////////////////
 function gameInit(){
@@ -39,22 +42,20 @@ function gameInit(){
     LittleJS.setTileSizeDefault(vec2(16, 16));
     //LittleJS.setObjectMaxSpeed(8);
     
-    const levelData = loadLevel();
+    currentLevelData = loadLevel();
 
     // enable gravity
     LittleJS.setGravity(-.0375);
 
-    player = new Player(levelData.playerSpawn);
+    player = new Player(currentLevelData.playerSpawn);
 
     // Spawn enemies in the loaded level
-    for(let i = 0; i < levelData.enemySpawns.length; i++){
-        const enemySpawn = levelData.enemySpawns[i].add(vec2(1, 0.5));
-        const enemy = new ChaseEnemy(enemySpawn);
-        enemy.spawnId = i;
-        enemySpawnPoints[i] = {
-            "spawnPosition": enemySpawn
-        };
-    }
+    spawnEnemies();
+
+    // Spawn small gorillas to collect
+    const testSmallGorilla = new SmallGorilla(vec2(10, 2));
+    const testSmallGorilla2 = new SmallGorilla(vec2(9, 8));
+    const testSmallGorilla3 = new SmallGorilla(vec2(19, 8));
 }
 
 export function enemyDied(enemy){
@@ -63,11 +64,44 @@ export function enemyDied(enemy){
     newEnemy.spawnId = enemy.spawnId;
 }
 
+export function playerDied(){
+    restartLevel();
+}
+
 export function addScore(amount){
     score += amount;
     if(score > highScore){
         highScore = score;
     }
+}
+
+function spawnEnemies(){
+    for(let i = 0; i < currentLevelData.enemySpawns.length; i++){
+        const enemySpawn = currentLevelData.enemySpawns[i].add(vec2(1, 0.5));
+        const enemy = new ChaseEnemy(enemySpawn);
+        enemy.spawnId = i;
+        enemySpawnPoints[i] = {
+            "spawnPosition": enemySpawn
+        };
+        enemy.setSpawnTime(2 + i*0.5);
+    }
+}
+
+function restartLevel(){
+    // Remove all enemies
+    for(let i = 0; i < LittleJS.engineObjects.length; i++){
+        const object = LittleJS.engineObjects[i];
+        if(object.isEnemy){
+            object.queueRemove();
+        }
+    }
+    // Respawn enemies
+    spawnEnemies();
+
+    // Respawn the player
+    player.isDead = false;
+    player.pos.x = currentLevelData.playerSpawn.x;
+    player.pos.y = currentLevelData.playerSpawn.y;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,4 +147,4 @@ function gameRenderPost(){
 
 ///////////////////////////////////////////////////////////////////////////////
 // Startup LittleJS Engine
-LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl, playerSpritesheet]);
+LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl, playerSpritesheet, smallGorillaSpritesheet]);

@@ -18,6 +18,9 @@ class EnemyState {
     static get SPAWNING(){
         return "SPAWNING";
     }
+    static get QUEUE_REMOVE(){
+        return "QUEUE_REMOVE";
+    }
 }
 
 class ChaseEnemy extends EngineObject {
@@ -49,6 +52,7 @@ class ChaseEnemy extends EngineObject {
         this.spawningTimer = new Timer();
         this.deathTimer = new Timer();
         this.deathSpinTimer = new Timer();
+        this.queueRemoveTimer = new Timer();
 
         this.enterState(EnemyState.SPAWNING);
     }
@@ -132,6 +136,15 @@ class ChaseEnemy extends EngineObject {
         else if(nextState === EnemyState.SPAWNING){
             this.spawningTimer.set(2);
         }
+        else if(nextState === EnemyState.QUEUE_REMOVE){
+            // Freeze the enemy in place to then remove soon after
+            this.jumpTimer.unset();
+            this.spawningTimer.unset();
+            this.maxSpeed = 0;
+            this.moveInput.x = 0;
+            this.setCollision(false, false);
+            this.queueRemoveTimer.set(1.25);
+        }
     }
 
     updateJump(){
@@ -176,6 +189,10 @@ class ChaseEnemy extends EngineObject {
     jump(jumpPower = 0.4375){
         this.velocity.y = jumpPower;
         this.isJumping = true;
+    }
+
+    setSpawnTime(delay){
+        this.spawningTimer.set(delay);
     }
 
     updateDead(){
@@ -263,6 +280,16 @@ class ChaseEnemy extends EngineObject {
             }
         }
 
+        // If queued for removal, stop all movement
+        if(this.state === EnemyState.QUEUE_REMOVE){
+            this.velocity.x = 0
+            this.velocity.y = 0;
+            this.gravityScale = 0;
+            if(!this.queueRemoveTimer.active()){
+                this.destroy();
+            }
+        }
+
         // Check if on ground
         const groundRay = vec2(0, -1);
         const raycastHit = LittleJS.tileCollisionRaycast(this.pos, this.pos.add(groundRay), this);
@@ -289,6 +316,10 @@ class ChaseEnemy extends EngineObject {
         super.update();
     }
 
+    queueRemove(){
+        this.enterState(EnemyState.QUEUE_REMOVE);
+    }
+
     collideWithTile(data, pos){
         return true;
     }
@@ -298,9 +329,9 @@ class ChaseEnemy extends EngineObject {
             // Enemies shouldn't collide with each other.
             return false;
         }
-        if(object === player && this.canTakeDamage()){
-            // TODO: testing DEAD state, change to trigger from attacks only
-            this.enterState(EnemyState.DEAD);
+        if(object === player){
+            // Hurt the player
+            player.damage();
             return false;
         }
         return true;
