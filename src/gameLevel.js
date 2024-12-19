@@ -1,7 +1,8 @@
 import * as LittleJS from "littlejsengine";
 const {vec2, TileLayer, TileLayerData} = LittleJS;
 import level_1 from "./assets/levels/level_1.json";
-const levelsData = [level_1];
+import level_2 from "./assets/levels/level_2.json";
+export const levelsList = [level_1, level_2];
 
 export let roomWidthInTiles = 16;
 const tileTypes = {
@@ -10,13 +11,14 @@ const tileTypes = {
     "SMALL_GORILLA_SPAWN": 27
 };
 
-export default function loadLevel(level=0){
+export default function loadLevel(level=1){
     const levelData = {
         "playerSpawn": vec2(6, 2),
         "enemySpawns": [],
         "smallGorillaSpawns": []
     };
-    const tileMapData = levelsData[level];
+    const levelIndex = level - 1;
+    const tileMapData = levelsList[levelIndex];
     const levelSize = vec2(tileMapData.width, tileMapData.height);
     LittleJS.initTileCollision(levelSize);
     roomWidthInTiles = levelSize.x;

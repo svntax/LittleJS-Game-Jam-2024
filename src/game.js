@@ -1,7 +1,7 @@
 "use strict";
 
 import * as LittleJS from "littlejsengine";
-import loadLevel from "./gameLevel.js";
+import loadLevel, { levelsList } from "./gameLevel.js";
 
 import tilesUrl from "./assets/tiles.png";
 import Player from "./Player/Player.js";
@@ -32,6 +32,7 @@ export let player;
 let lives = 2;
 let score = 0;
 let highScore = 0;
+let currentLevel = 1;
 let enemySpawnPoints = [];
 let currentLevelData = {};
 let homeNest;
@@ -76,10 +77,35 @@ function startGame(){
 
     score = 0;
     lives = 2;
+    currentLevel = 1;
     enemySpawnPoints = [];
     currentLevelData = {};
 
-    currentLevelData = loadLevel();
+    currentLevelData = loadLevel(currentLevel);
+
+    player = new Player(currentLevelData.playerSpawn.add(vec2(1, 0)));
+    homeNest = new Home(currentLevelData.playerSpawn.add(vec2(1, 0)));
+
+    // Spawn enemies in the loaded level
+    spawnEnemies();
+
+    // Spawn small gorillas to collect
+    spawnSmallGorillas();
+}
+
+function startNextLevel(){
+    LittleJS.engineObjectsDestroy();
+
+    playTransition(0.25);
+
+    currentLevel++;
+    // Loop back to first level after completing the final level.
+    if(currentLevel > levelsList.length){
+        currentLevel = 1;
+    }
+    enemySpawnPoints = [];
+
+    currentLevelData = loadLevel(currentLevel);
 
     player = new Player(currentLevelData.playerSpawn.add(vec2(1, 0)));
     homeNest = new Home(currentLevelData.playerSpawn.add(vec2(1, 0)));
@@ -159,6 +185,20 @@ function restartLevel(){
     }
     // Respawn enemies
     spawnEnemies();
+}
+
+export function isLevelComplete(){
+    let allGorillasSaved = true;
+    for(let i = 0; i < LittleJS.engineObjects.length; i++){
+        const object = LittleJS.engineObjects[i];
+        if(object.isSmallGorilla && !object.isCollectedAndSaved()){
+            allGorillasSaved = false;
+            break;
+        }
+    }
+    if(allGorillasSaved){
+        startNextLevel();
+    }
 }
 
 // Triggers the full black screen transition

@@ -206,6 +206,10 @@ class SmallGorilla extends EngineObject {
         this.enterState(State.SAVED);
     }
 
+    isCollectedAndSaved(){
+        return this.state === State.SAVED;
+    }
+
     collideWithObject(object){
         if(object.isSmallGorilla){
             return false;

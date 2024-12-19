@@ -4,7 +4,7 @@ const { EngineObject, Timer, vec2, keyWasPressed, keyIsDown, gamepadWasPressed, 
 
 import TextPopup from "../TextPopup.js";
 import { roomWidthInTiles } from "../gameLevel";
-import { addScore, playerDied, respawnPlayer } from "../game";
+import { addScore, playerDied, respawnPlayer, isLevelComplete } from "../game";
 
 // Points awarded when saving a small gorilla. Higher points if more are saved at a time.
 const gorillaSavedPoints = [100, 200, 300, 400, 500, 1000, 2000, 5000];
@@ -122,9 +122,16 @@ class Player extends EngineObject {
             }
             else{
                 // Finished saving all held gorillas
-                this.savingGorillas = false;
                 this.savedGorillaIndex = 0;
                 this.heldGorillasList = [];
+                if(isLevelComplete()){
+                    nextLevel();
+                    // Hacky way to keep the player frozen
+                    this.saveGorillaTimer.set(10);
+                }
+                else{
+                    this.savingGorillas = false;
+                }
             }
         }
     }
