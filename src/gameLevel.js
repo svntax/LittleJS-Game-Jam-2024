@@ -5,12 +5,13 @@ const levelsData = [level_1];
 
 export let roomWidthInTiles = 16;
 const tileTypes = {
-    "SPAWN": 6
+    "SPAWN": 6,
+    "PLAYER_SPAWN": 17
 };
 
 export default function loadLevel(level=0){
     const levelData = {
-        "playerSpawn": vec2(6, 2), // TODO: Set this in Tiled
+        "playerSpawn": vec2(6, 2),
         "enemySpawns": []
     };
     const tileMapData = levelsData[level];
@@ -42,6 +43,9 @@ export default function loadLevel(level=0){
                 if(layer.name === "SpawnLayer"){
                     if(tile === tileTypes.SPAWN){
                         levelData.enemySpawns.push(pos);
+                    }
+                    else if(tile === tileTypes.PLAYER_SPAWN){
+                        levelData.playerSpawn = pos.copy();
                     }
                 }
                 else{

@@ -9,6 +9,7 @@ import playerSpritesheet from "./Player/gorilla.png";
 import smallGorillaSpritesheet from "./Items/small_gorilla.png";
 import ChaseEnemy from "./Enemies/ChaseEnemy.js";
 import SmallGorilla from "./Items/SmallGorilla.js";
+import Home from "./Items/Home.js";
 
 const {vec2} = LittleJS;
 
@@ -26,12 +27,13 @@ const medal_example = new LittleJS.Medal(0, "Example Medal", "Welcome to LittleJ
 LittleJS.medalsInit("Hello World");
 
 // game variables
-const bgColor = new LittleJS.Color(0, 132 / 255, 86 / 255);
+const bgColor = new LittleJS.Color(0, 61 / 255, 16 / 255);
 export let player;
 let score = 0;
 let highScore = 0;
 const enemySpawnPoints = [];
 let currentLevelData = {};
+let homeNest;
 
 ///////////////////////////////////////////////////////////////////////////////
 function gameInit(){
@@ -47,7 +49,8 @@ function gameInit(){
     // enable gravity
     LittleJS.setGravity(-.0375);
 
-    player = new Player(currentLevelData.playerSpawn);
+    player = new Player(currentLevelData.playerSpawn.add(vec2(1, 0)));
+    homeNest = new Home(currentLevelData.playerSpawn.add(vec2(1, 1)));
 
     // Spawn enemies in the loaded level
     spawnEnemies();
@@ -94,7 +97,7 @@ function spawnEnemies(){
 export function respawnPlayer(){
     player.isDead = false;
     player.angle = 0;
-    player.pos.x = currentLevelData.playerSpawn.x;
+    player.pos.x = currentLevelData.playerSpawn.x + 1;
     player.pos.y = currentLevelData.playerSpawn.y;
 }
 
