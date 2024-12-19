@@ -49,6 +49,8 @@ class State {
 }
 let gameState = State.GAMEPLAY;
 let gameOverTimer = new Timer();
+let transitionScreenTimer = new Timer();
+let showingTransition = false;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -69,6 +71,8 @@ function gameInit(){
 function startGame(){
     gameState = State.GAMEPLAY;
     LittleJS.engineObjectsDestroy();
+
+    playTransition(0.25);
 
     score = 0;
     lives = 2;
@@ -131,6 +135,7 @@ export function respawnPlayer(){
         gameState = State.GAME_OVER;
     }
     else{
+        playTransition(0.25);
         player.isDead = false;
         player.isRespawning = false;
         player.angle = 0;
@@ -151,6 +156,12 @@ function restartLevel(){
     spawnEnemies();
 }
 
+// Triggers the full black screen transition
+function playTransition(transitionTime){
+    showingTransition = true;
+    transitionScreenTimer.set(transitionTime);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 function gameUpdate(){
     if (LittleJS.mouseWasPressed(0)){
@@ -166,6 +177,12 @@ function gameUpdate(){
     if(gameState === State.GAME_OVER){
         if(!gameOverTimer.active()){
             startGame();
+        }
+    }
+
+    if(showingTransition){
+        if(!transitionScreenTimer.active()){
+            showingTransition = false;
         }
     }
 }
@@ -206,6 +223,11 @@ function gameRenderPost(){
     // Game over screen
     if(gameState === State.GAME_OVER){
         drawText("GAME OVER", LittleJS.canvasFixedSize.x / 2, LittleJS.canvasFixedSize.y / 2, 8, "center");
+    }
+
+    // Black transition screen
+    if(showingTransition){
+        LittleJS.drawRect(vec2(128, 112), vec2(256, 224), LittleJS.BLACK, 0, false, true, LittleJS.overlayContext);
     }
 }
 
