@@ -50,7 +50,7 @@ function gameInit(){
     LittleJS.setGravity(-.0375);
 
     player = new Player(currentLevelData.playerSpawn.add(vec2(1, 0)));
-    homeNest = new Home(currentLevelData.playerSpawn.add(vec2(1, 1)));
+    homeNest = new Home(currentLevelData.playerSpawn.add(vec2(1, 0)));
 
     // Spawn enemies in the loaded level
     spawnEnemies();

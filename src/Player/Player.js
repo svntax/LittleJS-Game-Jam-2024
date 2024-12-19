@@ -2,8 +2,12 @@ import * as LittleJS from "littlejsengine";
 const { EngineObject, Timer, vec2, keyWasPressed, keyIsDown, gamepadWasPressed, gamepadStick,  isUsingGamepad,
     clamp, sign } = LittleJS;
 
+import TextPopup from "../TextPopup.js";
 import { roomWidthInTiles } from "../gameLevel";
 import { addScore, playerDied, respawnPlayer } from "../game";
+
+// Points awarded when saving a small gorilla. Higher points if more are saved at a time.
+const gorillaSavedPoints = [100, 200, 300, 400, 500, 1000, 2000, 5000];
 
 class Player extends EngineObject {
     constructor(pos){
@@ -31,8 +35,13 @@ class Player extends EngineObject {
         this.isPlayingDeathAnimation = false;
 
         this.heldGorillas = 0;
+        this.heldGorillasList = [];
+        this.savedGorillaIndex = 0;
+        this.savingGorillas = false;
         this.renderOrder = 5;
         this.smallGorillaTileInfo = LittleJS.tile(1, 16, 2); // Held frame
+        this.saveGorillaTimer = new Timer();
+        this.savePopupDelay = 0.1;
     }
 
     render(){
@@ -84,6 +93,34 @@ class Player extends EngineObject {
             else{
                 // Second phase - signal to the game to restart the player
                 respawnPlayer();
+            }
+        }
+    }
+
+    savingGorillasUpdate(){
+        this.velocity.x = 0;
+        this.velocity.y = 0;
+        this.gravityScale = 0;
+        if(!this.saveGorillaTimer.active()){
+            if(this.heldGorillas > 0){
+                this.saveGorillaTimer.set(this.savePopupDelay);
+                const nextGorilla = this.heldGorillasList[this.savedGorillaIndex];
+                nextGorilla.collectAndSave(); // This function leads to heldGorillas decreasing already, so no need to decrease it here.
+                const nextScore = gorillaSavedPoints[this.savedGorillaIndex];
+                addScore(nextScore);
+                // Score popup effect
+                const scorePopup = new TextPopup(this.pos);
+                scorePopup.text = nextScore;
+                scorePopup.offset = vec2(0, 0.25 + 0.5 * this.savedGorillaIndex);
+                scorePopup.color = new LittleJS.Color(232 / 255, 234 / 255, 74 / 255);
+                scorePopup.lifeTimer.set(0.75);
+                this.savedGorillaIndex++;
+            }
+            else{
+                // Finished saving all held gorillas
+                this.savingGorillas = false;
+                this.savedGorillaIndex = 0;
+                this.heldGorillasList = [];
             }
         }
     }
@@ -168,6 +205,11 @@ class Player extends EngineObject {
             this.deadUpdate();
         }
 
+        // Saving state interrupts movement logic here
+        if(this.savingGorillas){
+            this.savingGorillasUpdate();
+        }
+
         // Seamless room warping effect
         if(this.pos.x >= roomWidthInTiles){
             this.pos.x -= roomWidthInTiles;
@@ -191,6 +233,31 @@ class Player extends EngineObject {
         this.heldGorillas--;
     }
 
+    saveHeldGorillas(){
+        if(this.savingGorillas || this.heldGorillas <= 0){
+            return;
+        }
+        this.savingGorillas = true;
+        const enemiesList = []; // List of enemies in order to pause them while the save cutscene is running.
+        for(let i = 0; i < LittleJS.engineObjects.length; i++){
+            const object = LittleJS.engineObjects[i];
+            if(object.isSmallGorilla && object.isHeldByPlayer()){
+                this.heldGorillasList.push(object);
+            }
+            else if(object.isEnemy){
+                enemiesList.push(object);
+            }
+        }
+        if(this.heldGorillasList.length !== this.heldGorillas){
+            console.error("Number of held gorillas doesn't match heldGorillas value! This shouldn't happen!");
+        }
+        for(let i = 0; i < enemiesList.length; i++){
+            enemiesList[i].pause(this.heldGorillas * this.savePopupDelay);
+        }
+        this.savedGorillaIndex = 0;
+        this.saveGorillaTimer.set(this.savePopupDelay);
+    }
+
     damage(){
         if(this.isDead){
             return;
@@ -199,7 +266,7 @@ class Player extends EngineObject {
         this.isDead = true;
         for(let i = 0; i < LittleJS.engineObjects.length; i++){
             const object = LittleJS.engineObjects[i];
-            if(object.isSmallGorilla){
+            if(object.isSmallGorilla && object.isHeldByPlayer()){
                 object.dropFromPlayer();
             }
         }

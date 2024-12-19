@@ -14,6 +14,9 @@ class State {
     static get LOST(){
         return "LOST";
     }
+    static get SAVED(){
+        return "SAVED";
+    }
 }
 
 class SmallGorilla extends EngineObject {
@@ -39,6 +42,10 @@ class SmallGorilla extends EngineObject {
     }
 
     render(){
+        if(this.state === State.SAVED){
+            return;
+        }
+
         let bodyPos = this.pos;
         let spriteFrame = 0;
         if(this.state === State.IDLE){
@@ -87,6 +94,10 @@ class SmallGorilla extends EngineObject {
             this.moveInput.x = LittleJS.randSign();
             this.setCollision(true, true);
         }
+        else if(nextState === State.SAVED){
+            this.moveTimer.unset();
+            this.moveInput.x = 0;
+        }
     }
 
     // Held by the player
@@ -106,6 +117,13 @@ class SmallGorilla extends EngineObject {
                 this.moveInput.x *= -1;
             }
         }
+    }
+
+    updateSaved(){
+        this.moveInput.x = 0;
+        this.gravityScale = 0;
+        this.velocity.x = 0;
+        this.velocity.y = 0;
     }
 
     update(){
@@ -158,6 +176,10 @@ class SmallGorilla extends EngineObject {
             this.velocity.x *= .5; // moving against velocity (stopping)
         }
 
+        if(this.state === State.SAVED){
+            this.updateSaved();
+        }
+
         // Seamless room warping effect
         if(this.pos.x >= roomWidthInTiles){
             this.pos.x -= roomWidthInTiles;
@@ -176,6 +198,14 @@ class SmallGorilla extends EngineObject {
         }
     }
 
+    isHeldByPlayer(){
+        return this.state === State.HELD;
+    }
+
+    collectAndSave(){
+        this.enterState(State.SAVED);
+    }
+
     collideWithObject(object){
         if(object.isSmallGorilla){
             return false;
@@ -189,7 +219,7 @@ class SmallGorilla extends EngineObject {
             return false;
         }
         if(object === player){
-            if(this.canPickUp() && !player.isDead){
+            if(this.canPickUp() && !player.isDead && !player.savingGorillas){
                 this.enterState(State.HELD);
             }
             return false;

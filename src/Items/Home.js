@@ -15,12 +15,12 @@ class Home extends EngineObject {
         this.drawSize = vec2(2, 1);
         this.size = vec2(1, 1);
 
-        this.setCollision(true, false, false);
+        this.setCollision(true, false, true);
         this.gravityScale = 0;
     }
 
     render(){
-        let bodyPos = this.pos;
+        let bodyPos = this.pos.add(vec2(0, 1)); // The sprite itself is offset upwards a bit
         const currentColor = this.flashColors[this.currentColorIndex];
         for(let i = 0; i < 2; i++){
 
@@ -47,8 +47,8 @@ class Home extends EngineObject {
 
     collideWithObject(object){
         if(object === player){
-            if(!player.isDead){
-                // TODO: saved gorillas
+            if(!player.isDead && !player.savingGorillas){
+                player.saveHeldGorillas();
             }
         }
         return false;

@@ -54,6 +54,9 @@ class ChaseEnemy extends EngineObject {
         this.deathSpinTimer = new Timer();
         this.queueRemoveTimer = new Timer();
 
+        this.paused = false;
+        this.pauseTimer = new Timer();
+
         this.enterState(EnemyState.SPAWNING);
     }
 
@@ -222,7 +225,19 @@ class ChaseEnemy extends EngineObject {
         return this.state !== EnemyState.SPAWNING && this.state !== EnemyState.DEAD;
     }
 
+    pause(seconds){
+        this.paused = true;
+        this.pauseTimer.set(seconds);
+    }
+
     update(){
+        if(this.paused){
+            if(!this.pauseTimer.active()){
+                this.paused = false;
+            }
+            return;
+        }
+
         if(this.state === EnemyState.CHASE){
             this.updateChase();
         }
