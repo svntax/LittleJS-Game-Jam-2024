@@ -305,7 +305,7 @@ function gameRender(){
     if(gameState === State.TITLE){
         currentBgColor = LittleJS.BLACK;
     }
-    LittleJS.drawRect(vec2(128, 112), vec2(256, 224), currentBgColor, 0, false, true);
+    LittleJS.drawRect(vec2(128, 112), vec2(256+8, 224+8), currentBgColor, 0, false, true);
     if(gameState === State.TITLE){
         const titleTileInfo = LittleJS.tile(0, vec2(176, 64), 4);
         LittleJS.drawTile(vec2(0, 2.25), vec2(11, 4), titleTileInfo);
