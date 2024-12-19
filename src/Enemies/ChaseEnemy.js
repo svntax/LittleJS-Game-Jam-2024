@@ -38,17 +38,25 @@ class ChaseEnemy extends EngineObject {
         this.lowJumpPower = 0.225;
         this.maxSpeed = this.chaseMaxSpeed;
         
-        this.drawSize = vec2(2); // Tiles are 16x16 but the sprite is 32x32
+        this.drawSize = vec2(2, 1); // Tiles are 16x16 but the sprite is 32x32
+        this.tileInfo = LittleJS.tile(0, vec2(32, 16), 3);
         this.size = vec2(1.5, 0.75);
-        this.tileInfo = LittleJS.tile(1, 32, 1);
+        this.currentTileInfo = this.tileInfo.frame(5);
         this.color = LittleJS.WHITE;
         this.mirror = false;
         this.setCollision(false, false);
+
+        this.animationFrame = 0;
+        this.walkFrames = [0, 1, 2, 1];
+        this.animationTimer = new Timer();
+        this.animationTimer.set(0.2);
 
         this.onGround = false;
         this.isJumping = false;
         this.jumpTimer = new Timer();
 
+        this.hidingTimer = new Timer();
+        this.isHidingBeforeSpawn = true;
         this.spawningTimer = new Timer();
         this.deathTimer = new Timer();
         this.deathSpinTimer = new Timer();
@@ -61,12 +69,41 @@ class ChaseEnemy extends EngineObject {
     }
 
     render(){
+        if(this.isHidingBeforeSpawn){
+            return;
+        }
+        let spriteFrame = 1;
+        if(this.state === EnemyState.QUEUE_REMOVE){
+            spriteFrame = this.walkFrames[this.animationFrame];
+        }
+        if(this.state === EnemyState.SPAWNING){
+            spriteFrame = 5;
+        }
+        else if(this.state === EnemyState.JUMP){
+            if(this.jumpTimer.active()){
+                spriteFrame = 3;
+            }
+            else{
+                spriteFrame = 4;
+            }
+        }
+        else if(this.state === EnemyState.DEAD){
+            spriteFrame = 1;
+        }
+        else if(this.state === EnemyState.CHASE){
+            spriteFrame = this.walkFrames[this.animationFrame];
+            if(!this.onGround){
+                spriteFrame = 4;
+            }
+        }
+        this.currentTileInfo = this.tileInfo.frame(spriteFrame);
+
         let bodyPos = this.pos;
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y - this.size.y) / 2));
-        LittleJS.drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+        LittleJS.drawTile(bodyPos, this.drawSize, this.currentTileInfo, this.color, this.angle, this.mirror);
         // Draw copies of the sprite on both sides off screen to make the warping effect seamless.
-        LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
-        LittleJS.drawTile(bodyPos.add(vec2(roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+        LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.currentTileInfo, this.color, this.angle, this.mirror);
+        LittleJS.drawTile(bodyPos.add(vec2(roomWidthInTiles, 0)), this.drawSize, this.currentTileInfo, this.color, this.angle, this.mirror);
     }
 
     calculateMoveDirection(){
@@ -95,6 +132,12 @@ class ChaseEnemy extends EngineObject {
         if(!player){
             console.log("Player doesn't exist!");
             return;
+        }
+
+        if(!this.animationTimer.active()){
+            this.animationTimer.set(0.2);
+            this.animationFrame++;
+            this.animationFrame %= this.walkFrames.length;
         }
 
         const frontRay = vec2(1.25 * sign(this.moveInput.x), 0);
@@ -138,6 +181,7 @@ class ChaseEnemy extends EngineObject {
         }
         else if(nextState === EnemyState.SPAWNING){
             this.spawningTimer.set(2);
+            this.hidingTimer.set(1);
         }
         else if(nextState === EnemyState.QUEUE_REMOVE){
             // Freeze the enemy in place to then remove soon after
@@ -196,6 +240,7 @@ class ChaseEnemy extends EngineObject {
 
     setSpawnTime(delay){
         this.spawningTimer.set(delay);
+        this.hidingTimer.set(delay - 1);
     }
 
     updateDead(){
@@ -218,6 +263,9 @@ class ChaseEnemy extends EngineObject {
             this.moveInput.x = this.calculateMoveDirection();
             this.setCollision(true, false);
             this.enterState(EnemyState.CHASE);
+        }
+        if(!this.hidingTimer.active()){
+            this.isHidingBeforeSpawn = false;
         }
     }
 

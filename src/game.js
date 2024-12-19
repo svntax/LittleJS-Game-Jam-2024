@@ -7,6 +7,7 @@ import tilesUrl from "./assets/tiles.png";
 import Player from "./Player/Player.js";
 import playerSpritesheet from "./Player/gorilla.png";
 import smallGorillaSpritesheet from "./Items/small_gorilla.png";
+import leopardSpritesheet from "./Enemies/leopard.png";
 import ChaseEnemy from "./Enemies/ChaseEnemy.js";
 import SmallGorilla from "./Items/SmallGorilla.js";
 import Home from "./Items/Home.js";
@@ -315,7 +316,7 @@ function gameRenderPost(){
 
     // Game over screen
     if(gameState === State.GAME_OVER){
-        drawText("GAME OVER", LittleJS.canvasFixedSize.x / 2, LittleJS.canvasFixedSize.y / 2, 8, "center");
+        drawText("GAME OVER", LittleJS.canvasFixedSize.x / 2, LittleJS.canvasFixedSize.y / 2 + 4, 8, "center");
     }
 
     // Black transition screen
@@ -326,4 +327,4 @@ function gameRenderPost(){
 
 ///////////////////////////////////////////////////////////////////////////////
 // Startup LittleJS Engine
-LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl, playerSpritesheet, smallGorillaSpritesheet]);
+LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl, playerSpritesheet, smallGorillaSpritesheet, leopardSpritesheet]);
