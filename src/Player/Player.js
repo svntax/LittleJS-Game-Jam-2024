@@ -3,7 +3,7 @@ const { EngineObject, Timer, vec2, keyWasPressed, keyIsDown, gamepadWasPressed, 
     clamp, sign } = LittleJS;
 
 import { roomWidthInTiles } from "../gameLevel";
-import { addScore, playerDied } from "../game";
+import { addScore, playerDied, respawnPlayer } from "../game";
 
 class Player extends EngineObject {
     constructor(pos){
@@ -20,10 +20,15 @@ class Player extends EngineObject {
         this.mirror = false;
         this.setCollision(true, false);
         this.onGround = false;
+        this.isSolid = true;
         this.jumpTimer = new Timer();
         this.isJumping = false;
+
         this.isDead = false;
-        this.isSolid = true;
+        this.deathAnimationTimer = new Timer();
+        this.deathSpinTimer = new Timer();
+        this.angle = 0;
+        this.isPlayingDeathAnimation = false;
 
         this.heldGorillas = 0;
         this.renderOrder = 5;
@@ -33,10 +38,12 @@ class Player extends EngineObject {
     render(){
         let bodyPos = this.pos;
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y - this.size.y) / 2));
-        LittleJS.drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, 0, this.mirror);
-        // Draw copies of the player on both sides off screen to make the warping effect seamless.
-        LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, 0, this.mirror);
-        LittleJS.drawTile(bodyPos.add(vec2(roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, 0, this.mirror);
+        if(this.shouldBeVisible()){
+            LittleJS.drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+            // Draw copies of the player on both sides off screen to make the warping effect seamless.
+            LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+            LittleJS.drawTile(bodyPos.add(vec2(roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+        }
 
         const smallGorillaDrawSize = vec2(1);
         for(let i = 0; i < this.heldGorillas; i++){
@@ -49,20 +56,54 @@ class Player extends EngineObject {
         }
     }
 
+    shouldBeVisible(){
+        if(this.isDead){
+            return this.isPlayingDeathAnimation;
+        }
+
+        return true;
+    }
+
+    canMove(){
+        return !this.isDead;
+    }
+
+    deadUpdate(){
+        this.velocity.x = 0
+        if(!this.deathSpinTimer.active()){
+            this.deathSpinTimer.set(0.075);
+            const spinAmount = 90 * (LittleJS.PI / 180);
+            this.angle += spinAmount * (this.mirror ? -1 : 1);
+        }
+        if(!this.deathAnimationTimer.active()){
+            if(this.isPlayingDeathAnimation){
+                // First phase - finished animation
+                this.isPlayingDeathAnimation = false;
+                this.deathAnimationTimer.set(1.25);
+            }
+            else{
+                // Second phase - signal to the game to restart the player
+                respawnPlayer();
+            }
+        }
+    }
+
     update(){
         // Platformer controls based on the platformer example
         this.jumpPressed   = keyWasPressed("Space") || keyWasPressed("KeyZ") || keyWasPressed("KeyC") || keyWasPressed("KeyN") || gamepadWasPressed(0);
         this.actionPressed   = keyWasPressed("KeyX") || keyWasPressed("KeyV") || keyWasPressed("KeyM") || gamepadWasPressed(1);
 
-        this.moveInput = isUsingGamepad ? gamepadStick(0) : 
-            vec2(keyIsDown("ArrowRight") - keyIsDown("ArrowLeft"), 
-            keyIsDown("ArrowUp") - keyIsDown("ArrowDown"));
+        if(this.canMove()){
+            this.moveInput = isUsingGamepad ? gamepadStick(0) : 
+                vec2(keyIsDown("ArrowRight") - keyIsDown("ArrowLeft"), 
+                keyIsDown("ArrowUp") - keyIsDown("ArrowDown"));
+        }
         
         if(this.moveInput.x !== 0){
             this.mirror = (this.moveInput.x < 0);
         }
 
-        if(this.jumpPressed){
+        if(this.canMove() && this.jumpPressed){
             if(this.onGround || this.jumpTimer.active()){
                 this.velocity.y = 0.4375;
                 this.jumpTimer.unset();
@@ -122,6 +163,11 @@ class Player extends EngineObject {
             this.jumpTimer.set(.2);
         }
 
+        // Death state interrupts movement logic here
+        if(this.isDead){
+            this.deadUpdate();
+        }
+
         // Seamless room warping effect
         if(this.pos.x >= roomWidthInTiles){
             this.pos.x -= roomWidthInTiles;
@@ -149,7 +195,7 @@ class Player extends EngineObject {
         if(this.isDead){
             return;
         }
-        
+
         this.isDead = true;
         for(let i = 0; i < LittleJS.engineObjects.length; i++){
             const object = LittleJS.engineObjects[i];
@@ -159,6 +205,10 @@ class Player extends EngineObject {
         }
         this.heldGorillas = 0;
         playerDied();
+
+        this.velocity.y = 0;
+        this.isPlayingDeathAnimation = true;
+        this.deathAnimationTimer.set(1.5);
     }
 
     collideWithTile(data, pos){

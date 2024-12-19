@@ -83,8 +83,19 @@ function spawnEnemies(){
         enemySpawnPoints[i] = {
             "spawnPosition": enemySpawn
         };
-        enemy.setSpawnTime(2 + i*0.5);
+        let spawnDelay = 1.5;
+        if(player.isDead){
+            spawnDelay = 4;
+        }
+        enemy.setSpawnTime(spawnDelay + i*1.5);
     }
+}
+
+export function respawnPlayer(){
+    player.isDead = false;
+    player.angle = 0;
+    player.pos.x = currentLevelData.playerSpawn.x;
+    player.pos.y = currentLevelData.playerSpawn.y;
 }
 
 function restartLevel(){
@@ -97,11 +108,6 @@ function restartLevel(){
     }
     // Respawn enemies
     spawnEnemies();
-
-    // Respawn the player
-    player.isDead = false;
-    player.pos.x = currentLevelData.playerSpawn.x;
-    player.pos.y = currentLevelData.playerSpawn.y;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
