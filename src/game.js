@@ -8,11 +8,12 @@ import Player from "./Player/Player.js";
 import playerSpritesheet from "./Player/gorilla.png";
 import smallGorillaSpritesheet from "./Items/small_gorilla.png";
 import leopardSpritesheet from "./Enemies/leopard.png";
+import titleArtUrl from "./assets/title_art.png";
 import ChaseEnemy from "./Enemies/ChaseEnemy.js";
 import SmallGorilla from "./Items/SmallGorilla.js";
 import Home from "./Items/Home.js";
 
-const {vec2, Timer} = LittleJS;
+const {vec2, Timer, keyWasPressed, gamepadWasPressed} = LittleJS;
 
 // show the LittleJS splash screen
 //LittleJS.setShowSplashScreen(true);
@@ -27,6 +28,7 @@ export const collectedSound = new LittleJS.Sound([1.1,0,450,,.01,.13,,2.7,,-9.5,
 const playerDiedSound = new LittleJS.Sound([0.7,0,344,.01,.02,.28,1,1.4,,,50,,,,.3,.2,.15,.6,.06]);
 const levelCompleteMusic = new LittleJS.Music([[[,0,400,,,,,1.6]],[[[,,1,5,8,13,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]]],[0],250,{"title":"Level Complete","instruments":["Instrument 0"],"patterns":["Pattern 0"]}]);
 const gameOverMusic = new LittleJS.Music([[[1.3,0,130.8128,.03,.74,.5,1,3.9,,,,,,.3,,,,.31]],[[[,,4,,,,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]]],[0],100,{"title":"Game Over","instruments":["Instrument 0"],"patterns":["Pattern 0"]}]);
+const startGameSound = new LittleJS.Sound([,0,,.01,.02,.09,,.6,17,-3,,,.1,,,,,.76,.08]);
 
 // medals
 const medal_example = new LittleJS.Medal(0, "Example Medal", "Welcome to LittleJS!");
@@ -57,7 +59,7 @@ class State {
         return "GAME_OVER";
     }
 }
-let gameState = State.GAMEPLAY;
+let gameState = State.TITLE;
 let gameOverTimer = new Timer();
 let isLoadingNextLevel = false;
 let nextLevelTimer = new Timer();
@@ -77,10 +79,11 @@ function gameInit(){
     // enable gravity
     LittleJS.setGravity(-.0375);
     
-    startGame();
+    //startGame();
 }
 
 function startGame(){
+    startGameSound.play();
     gameState = State.GAMEPLAY;
     LittleJS.engineObjectsDestroy();
 
@@ -254,11 +257,24 @@ function gameUpdate(){
         //medal_example.unlock();
     }
 
-    LittleJS.setCameraPos(vec2(player.pos.x, (LittleJS.canvasFixedSize.y / 2 / LittleJS.tileSizeDefault.y)));
+    if(gameState === State.TITLE){
+        LittleJS.setCameraPos(vec2(0, 0));
+        const jumpPressed  = keyWasPressed("Space") || keyWasPressed("KeyZ") || keyWasPressed("KeyC") || keyWasPressed("KeyN") || gamepadWasPressed(0);
+        if(jumpPressed){
+            startGame();
+        }
+    }
+
+    if(gameState === State.GAMEPLAY){
+        if(player){
+            LittleJS.setCameraPos(vec2(player.pos.x, (LittleJS.canvasFixedSize.y / 2 / LittleJS.tileSizeDefault.y)));
+        }
+    }
 
     if(gameState === State.GAME_OVER){
         if(!gameOverTimer.active()){
-            startGame();
+            LittleJS.engineObjectsDestroy();
+            gameState = State.TITLE;
         }
     }
 
@@ -282,7 +298,29 @@ function gameUpdatePost(){
 
 ///////////////////////////////////////////////////////////////////////////////
 function gameRender(){
-    LittleJS.drawRect(vec2(128, 112), vec2(256, 224), bgColor, 0, false, true);
+    let currentBgColor = bgColor;
+    if(gameState === State.TITLE){
+        currentBgColor = LittleJS.BLACK;
+    }
+    LittleJS.drawRect(vec2(128, 112), vec2(256, 224), currentBgColor, 0, false, true);
+    if(gameState === State.TITLE){
+        const titleTileInfo = LittleJS.tile(0, vec2(176, 64), 4);
+        LittleJS.drawTile(vec2(0, 2.25), vec2(11, 4), titleTileInfo);
+
+        const playerTileInfo = LittleJS.tile(1, 32, 1);
+        LittleJS.drawTile(vec2(0.5, -1.5), vec2(2), playerTileInfo);
+
+        const smallGorillaTileInfo = LittleJS.tile(2, 16, 2);
+        LittleJS.drawTile(vec2(-1, -2), vec2(1), smallGorillaTileInfo);
+
+        const bushTileInfo = LittleJS.tile(5, vec2(16, 16), 0);
+        LittleJS.drawTile(vec2(-3.25, -2), vec2(1, 1), bushTileInfo);
+        LittleJS.drawTile(vec2(-2.25, -2), vec2(1, 1), bushTileInfo.frame(1));
+
+        const leopardTileInfo = LittleJS.tile(2, vec2(32, 16), 3);
+        LittleJS.drawTile(vec2(2.75, -2), vec2(2, 1), leopardTileInfo, LittleJS.WHITE, 0, true);
+        LittleJS.drawTile(vec2(-2.75, -2), vec2(2, 1), leopardTileInfo.frame(3), LittleJS.WHITE, 0);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -302,22 +340,28 @@ function gameRenderPost(){
     drawText("TOP", LittleJS.overlayCanvas.width - 104, 16, 8, "left");
     drawText(highScore, LittleJS.overlayCanvas.width - 16, 16, 8, "right");
 
-    // Level complete GUI
-    if(isLoadingNextLevel){
-        drawText("LEVEL COMPLETE", LittleJS.overlayCanvas.width / 2, 100, 8, "center");
-        drawText("BONUS " + levelCompletePoints, LittleJS.overlayCanvas.width / 2, 112, 8, "center");
+    if(gameState === State.TITLE){
+        drawText("PUSH START BUTTON", LittleJS.overlayCanvas.width / 2, LittleJS.overlayCanvas.height - 48, 8, "center");
     }
-
-    // Player lives
-    const lifeIconTile = LittleJS.tile(7, 16, 0);
-    for(let i = 0; i < lives; i++){
-        LittleJS.drawTile(vec2(12+(i*14), LittleJS.canvasFixedSize.y - 12), vec2(16), lifeIconTile, LittleJS.WHITE, 0, false, undefined, true, true);
+    else if(gameState === State.GAMEPLAY){
+        // Level complete GUI
+        if(isLoadingNextLevel){
+            drawText("LEVEL COMPLETE", LittleJS.overlayCanvas.width / 2, 100, 8, "center");
+            drawText("BONUS " + levelCompletePoints, LittleJS.overlayCanvas.width / 2, 112, 8, "center");
+        }
+    
+        // Player lives
+        const lifeIconTile = LittleJS.tile(7, 16, 0);
+        for(let i = 0; i < lives; i++){
+            LittleJS.drawTile(vec2(12+(i*14), LittleJS.canvasFixedSize.y - 12), vec2(16), lifeIconTile, LittleJS.WHITE, 0, false, undefined, true, true);
+        }
+    
     }
-
-    // Game over screen
-    if(gameState === State.GAME_OVER){
+    else if(gameState === State.GAME_OVER){
+        // Game over screen
         drawText("GAME OVER", LittleJS.canvasFixedSize.x / 2, LittleJS.canvasFixedSize.y / 2 + 4, 8, "center");
     }
+
 
     // Black transition screen
     if(showingTransition){
@@ -327,4 +371,4 @@ function gameRenderPost(){
 
 ///////////////////////////////////////////////////////////////////////////////
 // Startup LittleJS Engine
-LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl, playerSpritesheet, smallGorillaSpritesheet, leopardSpritesheet]);
+LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl, playerSpritesheet, smallGorillaSpritesheet, leopardSpritesheet, titleArtUrl]);
