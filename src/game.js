@@ -16,7 +16,7 @@ import Home from "./Items/Home.js";
 const {vec2, Timer, keyWasPressed, gamepadWasPressed} = LittleJS;
 
 // show the LittleJS splash screen
-//LittleJS.setShowSplashScreen(true);
+LittleJS.setShowSplashScreen(true);
 
 // fix texture bleeding by shrinking tile slightly
 LittleJS.setTileFixBleedScale(.5);
@@ -69,6 +69,7 @@ let showingTransition = false;
 
 ///////////////////////////////////////////////////////////////////////////////
 function gameInit(){
+    LittleJS.setShowWatermark(false);
     LittleJS.setCanvasPixelated(true);
     //LittleJS.setCanvasMaxSize(vec2(256, 224));
     LittleJS.setCanvasFixedSize(vec2(256, 224));
@@ -274,6 +275,8 @@ function gameUpdate(){
     if(gameState === State.GAME_OVER){
         if(!gameOverTimer.active()){
             LittleJS.engineObjectsDestroy();
+            score = 0;
+            playTransition(0.25);
             gameState = State.TITLE;
         }
     }
@@ -335,10 +338,10 @@ function gameRenderPost(){
         LittleJS.overlayContext.fillText(text, x, y);
     }
     // Score GUI
-    drawText("1P", 16, 16);
-    drawText(score, 96, 16, 8, "right");
-    drawText("TOP", LittleJS.overlayCanvas.width - 104, 16, 8, "left");
-    drawText(highScore, LittleJS.overlayCanvas.width - 16, 16, 8, "right");
+    drawText("1P", 16, 8);
+    drawText(score, 96, 8, 8, "right");
+    drawText("TOP", LittleJS.overlayCanvas.width - 104, 8, 8, "left");
+    drawText(highScore, LittleJS.overlayCanvas.width - 16, 8, 8, "right");
 
     if(gameState === State.TITLE){
         drawText("PUSH START BUTTON", LittleJS.overlayCanvas.width / 2, LittleJS.overlayCanvas.height - 48, 8, "center");
@@ -365,7 +368,7 @@ function gameRenderPost(){
 
     // Black transition screen
     if(showingTransition){
-        LittleJS.drawRect(vec2(128, 112), vec2(256, 224), LittleJS.BLACK, 0, false, true, LittleJS.overlayContext);
+        LittleJS.drawRect(vec2(128, 112), vec2(256+8, 224), LittleJS.BLACK, 0, false, true, LittleJS.overlayContext);
     }
 }
 
