@@ -88,9 +88,7 @@ function startGame(){
     spawnEnemies();
 
     // Spawn small gorillas to collect
-    const testSmallGorilla = new SmallGorilla(vec2(10, 2));
-    const testSmallGorilla2 = new SmallGorilla(vec2(9, 8));
-    const testSmallGorilla3 = new SmallGorilla(vec2(19, 8));
+    spawnSmallGorillas();
 }
 
 export function enemyDied(enemy){
@@ -123,6 +121,13 @@ function spawnEnemies(){
             spawnDelay = 4;
         }
         enemy.setSpawnTime(spawnDelay + i*1.5);
+    }
+}
+
+function spawnSmallGorillas(){
+    for(let i = 0; i < currentLevelData.smallGorillaSpawns.length; i++){
+        const spawn = currentLevelData.smallGorillaSpawns[i].add(vec2(0.5, 0.5));
+        const smallGorilla = new SmallGorilla(spawn);
     }
 }
 

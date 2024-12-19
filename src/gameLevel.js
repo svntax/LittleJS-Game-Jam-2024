@@ -6,13 +6,15 @@ const levelsData = [level_1];
 export let roomWidthInTiles = 16;
 const tileTypes = {
     "SPAWN": 6,
-    "PLAYER_SPAWN": 17
+    "PLAYER_SPAWN": 17,
+    "SMALL_GORILLA_SPAWN": 27
 };
 
 export default function loadLevel(level=0){
     const levelData = {
         "playerSpawn": vec2(6, 2),
-        "enemySpawns": []
+        "enemySpawns": [],
+        "smallGorillaSpawns": []
     };
     const tileMapData = levelsData[level];
     const levelSize = vec2(tileMapData.width, tileMapData.height);
@@ -46,6 +48,9 @@ export default function loadLevel(level=0){
                     }
                     else if(tile === tileTypes.PLAYER_SPAWN){
                         levelData.playerSpawn = pos.copy();
+                    }
+                    else if(tile === tileTypes.SMALL_GORILLA_SPAWN){
+                        levelData.smallGorillaSpawns.push(pos);
                     }
                 }
                 else{
