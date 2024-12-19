@@ -33,6 +33,7 @@ class Player extends EngineObject {
         this.deathSpinTimer = new Timer();
         this.angle = 0;
         this.isPlayingDeathAnimation = false;
+        this.isRespawning = false;
 
         this.heldGorillas = 0;
         this.heldGorillasList = [];
@@ -92,7 +93,10 @@ class Player extends EngineObject {
             }
             else{
                 // Second phase - signal to the game to restart the player
-                respawnPlayer();
+                if(!this.isRespawning){
+                    this.isRespawning = true;
+                    respawnPlayer();
+                }
             }
         }
     }

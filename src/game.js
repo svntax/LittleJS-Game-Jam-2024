@@ -11,7 +11,7 @@ import ChaseEnemy from "./Enemies/ChaseEnemy.js";
 import SmallGorilla from "./Items/SmallGorilla.js";
 import Home from "./Items/Home.js";
 
-const {vec2} = LittleJS;
+const {vec2, Timer} = LittleJS;
 
 // show the LittleJS splash screen
 //LittleJS.setShowSplashScreen(true);
@@ -29,11 +29,27 @@ LittleJS.medalsInit("Hello World");
 // game variables
 const bgColor = new LittleJS.Color(0, 61 / 255, 16 / 255);
 export let player;
+let lives = 2;
 let score = 0;
 let highScore = 0;
-const enemySpawnPoints = [];
+let enemySpawnPoints = [];
 let currentLevelData = {};
 let homeNest;
+
+class State {
+    static get TITLE(){
+        return "TITLE";
+    }
+    static get GAMEPLAY(){
+        return "GAMEPLAY";
+    }
+    static get GAME_OVER(){
+        return "GAME_OVER";
+    }
+}
+let gameState = State.GAMEPLAY;
+let gameOverTimer = new Timer();
+
 
 ///////////////////////////////////////////////////////////////////////////////
 function gameInit(){
@@ -43,11 +59,23 @@ function gameInit(){
     LittleJS.setCameraScale(16);
     LittleJS.setTileSizeDefault(vec2(16, 16));
     //LittleJS.setObjectMaxSpeed(8);
-    
-    currentLevelData = loadLevel();
 
     // enable gravity
     LittleJS.setGravity(-.0375);
+    
+    startGame();
+}
+
+function startGame(){
+    gameState = State.GAMEPLAY;
+    LittleJS.engineObjectsDestroy();
+
+    score = 0;
+    lives = 2;
+    enemySpawnPoints = [];
+    currentLevelData = {};
+
+    currentLevelData = loadLevel();
 
     player = new Player(currentLevelData.playerSpawn.add(vec2(1, 0)));
     homeNest = new Home(currentLevelData.playerSpawn.add(vec2(1, 0)));
@@ -95,10 +123,20 @@ function spawnEnemies(){
 }
 
 export function respawnPlayer(){
-    player.isDead = false;
-    player.angle = 0;
-    player.pos.x = currentLevelData.playerSpawn.x + 1;
-    player.pos.y = currentLevelData.playerSpawn.y;
+    lives--;
+    if(lives < 0){
+        // Game over
+        lives = 0;
+        gameOverTimer.set(3);
+        gameState = State.GAME_OVER;
+    }
+    else{
+        player.isDead = false;
+        player.isRespawning = false;
+        player.angle = 0;
+        player.pos.x = currentLevelData.playerSpawn.x + 1;
+        player.pos.y = currentLevelData.playerSpawn.y;
+    }
 }
 
 function restartLevel(){
@@ -124,6 +162,12 @@ function gameUpdate(){
     }
 
     LittleJS.setCameraPos(vec2(player.pos.x, (LittleJS.canvasFixedSize.y / 2 / LittleJS.tileSizeDefault.y)));
+
+    if(gameState === State.GAME_OVER){
+        if(!gameOverTimer.active()){
+            startGame();
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -152,6 +196,17 @@ function gameRenderPost(){
     drawText(score, 96, 16, 8, "right");
     drawText("TOP", LittleJS.overlayCanvas.width - 104, 16, 8, "left");
     drawText(highScore, LittleJS.overlayCanvas.width - 16, 16, 8, "right");
+
+    // Player lives
+    const lifeIconTile = LittleJS.tile(7, 16, 0);
+    for(let i = 0; i < lives; i++){
+        LittleJS.drawTile(vec2(12+(i*14), LittleJS.canvasFixedSize.y - 12), vec2(16), lifeIconTile, LittleJS.WHITE, 0, false, undefined, true, true);
+    }
+
+    // Game over screen
+    if(gameState === State.GAME_OVER){
+        drawText("GAME OVER", LittleJS.canvasFixedSize.x / 2, LittleJS.canvasFixedSize.y / 2, 8, "center");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
