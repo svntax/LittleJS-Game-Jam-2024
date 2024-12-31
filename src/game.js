@@ -4,6 +4,9 @@ import * as LittleJS from "littlejsengine";
 import loadLevel, { levelsList } from "./gameLevel.js";
 
 import tilesUrl from "./assets/tiles.png";
+import forestBackground from "./assets/forest_background.png";
+import forestBackground2 from "./assets/forest_background_2.png";
+import forestBackground3 from "./assets/forest_background_3.png";
 import Player from "./Player/Player.js";
 import playerSpritesheet from "./Player/gorilla.png";
 import smallGorillaSpritesheet from "./Items/small_gorilla.png";
@@ -36,6 +39,7 @@ LittleJS.medalsInit("Hello World");
 
 // game variables
 const bgColor = new LittleJS.Color(0, 61 / 255, 16 / 255);
+let forestBgObject;
 export let player;
 let lives = 2;
 let score = 0;
@@ -79,8 +83,6 @@ function gameInit(){
 
     // enable gravity
     LittleJS.setGravity(-.0375);
-    
-    //startGame();
 }
 
 function startGame(){
@@ -96,6 +98,8 @@ function startGame(){
     enemySpawnPoints = [];
     currentLevelData = {};
     isLoadingNextLevel = false;
+
+    setupForestBackground();
 
     currentLevelData = loadLevel(currentLevel);
 
@@ -122,6 +126,8 @@ function startNextLevel(){
     }
     enemySpawnPoints = [];
 
+    setupForestBackground();
+
     currentLevelData = loadLevel(currentLevel);
 
     player = new Player(currentLevelData.playerSpawn.add(vec2(1, 0)));
@@ -132,6 +138,30 @@ function startNextLevel(){
 
     // Spawn small gorillas to collect
     spawnSmallGorillas();
+}
+
+function setupForestBackground(){
+    // Forest background layer
+    forestBgObject = new LittleJS.EngineObject();
+    forestBgObject.gravityScale = 0;
+    forestBgObject.renderOrder = 0;
+    forestBgObject.render = function(){
+        if(gameState === State.GAMEPLAY || gameState === State.GAME_OVER){
+            for(let bgx = -3; bgx <= 3; bgx++){
+                // Note: levels 2 and 3 are different sized widths (not perfect multiples of 256), so the normal image doesn't tile seamlessly
+                // Hacky solution is to just have different sized versions of the image
+                if(currentLevel === 1){
+                    LittleJS.drawTile(vec2(8 + (bgx*(16-0.05)), 8), vec2(16, 14), LittleJS.tile(0, vec2(256, 224), 5), LittleJS.WHITE, 0, false, undefined, false, false, LittleJS.mainContext);
+                }
+                else if(currentLevel === 2){
+                    LittleJS.drawTile(vec2(10 + (bgx*(20-0.05)), 8), vec2(20, 14), LittleJS.tile(0, vec2(320, 224), 6), LittleJS.WHITE, 0, false, undefined, false, false, LittleJS.mainContext);
+                }
+                else if(currentLevel === 3){
+                    LittleJS.drawTile(vec2(12 + (bgx*(24-0.05)), 8), vec2(24, 14), LittleJS.tile(0, vec2(384, 224), 7), LittleJS.WHITE, 0, false, undefined, false, false, LittleJS.mainContext);
+                }
+            }
+        }
+    }
 }
 
 export function enemyDied(enemy){
@@ -374,4 +404,4 @@ function gameRenderPost(){
 
 ///////////////////////////////////////////////////////////////////////////////
 // Startup LittleJS Engine
-LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl, playerSpritesheet, smallGorillaSpritesheet, leopardSpritesheet, titleArtUrl]);
+LittleJS.engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, [tilesUrl, playerSpritesheet, smallGorillaSpritesheet, leopardSpritesheet, titleArtUrl, forestBackground, forestBackground2, forestBackground3]);

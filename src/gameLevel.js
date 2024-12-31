@@ -56,6 +56,19 @@ export default function loadLevel(level=1){
                         levelData.smallGorillaSpawns.push(pos);
                     }
                 }
+                else if(layer.name === "BackLayer" || layer.name === "Back2Layer"){
+                    // Background tiles
+                    if(layer.name === "Back2Layer"){
+                        tileLayer.renderOrder = 1;
+                        tileLayerLeft.renderOrder = 1;
+                        tileLayerRight.renderOrder = 1;
+                    }
+                    else{
+                        tileLayer.renderOrder = 2;
+                        tileLayerLeft.renderOrder = 2;
+                        tileLayerRight.renderOrder = 2;
+                    }
+                }
                 else{
                     LittleJS.setTileCollisionData(pos, 1);
                 }
