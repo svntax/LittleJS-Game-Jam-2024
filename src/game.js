@@ -288,10 +288,12 @@ function gameUpdate(){
         //medal_example.unlock();
     }
 
+    const startPressed = keyWasPressed("Enter") || gamepadWasPressed(9);
+
     if(gameState === State.TITLE){
         LittleJS.setCameraPos(vec2(0, 0));
         const jumpPressed  = keyWasPressed("Space") || keyWasPressed("KeyZ") || keyWasPressed("KeyC") || keyWasPressed("KeyN") || gamepadWasPressed(0);
-        if(jumpPressed){
+        if(jumpPressed || startPressed){
             startGame();
         }
     }
@@ -326,7 +328,12 @@ function gameUpdate(){
 
 ///////////////////////////////////////////////////////////////////////////////
 function gameUpdatePost(){
-
+    const startPressed = keyWasPressed("Enter") || gamepadWasPressed(9);
+    if(gameState === State.GAMEPLAY){
+        if(startPressed && !showingTransition){
+            LittleJS.setPaused(!LittleJS.paused);
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -399,6 +406,11 @@ function gameRenderPost(){
     // Black transition screen
     if(showingTransition){
         LittleJS.drawRect(vec2(128, 112), vec2(256+8, 224), LittleJS.BLACK, 0, false, true, LittleJS.overlayContext);
+    }
+
+    if(LittleJS.paused){
+        LittleJS.drawRect(vec2(127, 119), vec2(46, 14), LittleJS.BLACK, 0, false, true, LittleJS.overlayContext);
+        drawText("PAUSE", LittleJS.canvasFixedSize.x / 2, LittleJS.canvasFixedSize.y / 2 + 4, 8, "center");
     }
 }
 
