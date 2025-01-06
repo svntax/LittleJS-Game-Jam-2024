@@ -64,6 +64,9 @@ class Player extends EngineObject {
         else if(this.moveInput.x === 0){
             spriteFrame = 1;
         }
+        else if(this.savingGorillas){
+            spriteFrame = 1;
+        }
         else{
             spriteFrame = this.walkFrames[this.animationFrame];
         }
