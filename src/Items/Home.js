@@ -1,5 +1,5 @@
 import * as LittleJS from "littlejsengine";
-const { EngineObject, Timer, vec2, clamp, sign } = LittleJS;
+const { EngineObject, Timer, vec2 } = LittleJS;
 
 import { roomWidthInTiles } from "../gameLevel";
 import { player } from "../game.js";
@@ -22,9 +22,6 @@ class Home extends EngineObject {
     render(){
         let bodyPos = this.pos.add(vec2(0, 1)); // The sprite itself is offset upwards a bit
         const currentColor = this.flashColors[this.currentColorIndex];
-        for(let i = 0; i < 2; i++){
-
-        }
         LittleJS.drawTile(bodyPos, this.drawSize, this.tileInfo, currentColor);
         // Draw copies of the sprite on both sides off screen to make the warping effect seamless.
         LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.tileInfo, currentColor);
