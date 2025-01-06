@@ -19,7 +19,7 @@ class Player extends EngineObject {
         
         this.drawSize = vec2(2); // Tiles are 16x16 but the sprite is 32x32
         this.size = vec2(1.5, 0.75);
-        this.tileInfo = LittleJS.tile(1, 32, 1);
+        this.tileInfo = LittleJS.tile(0, 32, 1);
         this.color = LittleJS.WHITE;
         this.mirror = false;
         this.setCollision(true, false);
@@ -27,6 +27,13 @@ class Player extends EngineObject {
         this.isSolid = true;
         this.jumpTimer = new Timer();
         this.isJumping = false;
+
+        this.currentTileInfo = this.tileInfo.frame(1);
+        this.animationFrame = 0;
+        this.walkFrames = [0, 1, 2, 1];
+        this.animationTimer = new Timer();
+        this.walkAnimationSpeed = 0.15;
+        this.animationTimer.set(this.walkAnimationSpeed);
 
         this.isDead = false;
         this.deathAnimationTimer = new Timer();
@@ -47,18 +54,34 @@ class Player extends EngineObject {
     }
 
     render(){
+        let spriteFrame = 1;
+        if(this.isDead){
+            spriteFrame = 1;
+        }
+        else if(!this.onGround){
+            spriteFrame = 0;
+        }
+        else if(this.moveInput.x === 0){
+            spriteFrame = 1;
+        }
+        else{
+            spriteFrame = this.walkFrames[this.animationFrame];
+        }
+        this.currentTileInfo = this.tileInfo.frame(spriteFrame);
+
         let bodyPos = this.pos;
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y - this.size.y) / 2));
         if(this.shouldBeVisible()){
-            LittleJS.drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+            LittleJS.drawTile(bodyPos, this.drawSize, this.currentTileInfo, this.color, this.angle, this.mirror);
             // Draw copies of the player on both sides off screen to make the warping effect seamless.
-            LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
-            LittleJS.drawTile(bodyPos.add(vec2(roomWidthInTiles, 0)), this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+            LittleJS.drawTile(bodyPos.add(vec2(-roomWidthInTiles, 0)), this.drawSize, this.currentTileInfo, this.color, this.angle, this.mirror);
+            LittleJS.drawTile(bodyPos.add(vec2(roomWidthInTiles, 0)), this.drawSize, this.currentTileInfo, this.color, this.angle, this.mirror);
         }
 
         const smallGorillaDrawSize = vec2(1);
+        const walkAnimOffsetY = (spriteFrame === 1 ? 0 : -0.0625);
         for(let i = 0; i < this.heldGorillas; i++){
-            const stackPos = this.pos.add(vec2(0, i*0.25 + 0.5625));
+            const stackPos = this.pos.add(vec2(0, i*0.25 + 0.5625 + walkAnimOffsetY));
             // Draw the stack of held gorillas
             LittleJS.drawTile(stackPos, smallGorillaDrawSize, this.smallGorillaTileInfo, this.color, 0, this.mirror);
             // Draw copies of the sprite on both sides off screen to make the warping effect seamless.
@@ -207,6 +230,13 @@ class Player extends EngineObject {
         // Coyote timer
         if(!this.onGround && wasOnGround && !this.isJumping){
             this.jumpTimer.set(.2);
+        }
+
+        // Update walk animation
+        if(!this.animationTimer.active()){
+            this.animationTimer.set(this.walkAnimationSpeed);
+            this.animationFrame++;
+            this.animationFrame %= this.walkFrames.length;
         }
 
         // Death state interrupts movement logic here
