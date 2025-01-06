@@ -1,5 +1,5 @@
 import * as LittleJS from "littlejsengine";
-const { EngineObject, Timer, vec2, keyWasPressed, keyIsDown, gamepadWasPressed, gamepadStick,  isUsingGamepad,
+const { EngineObject, Timer, vec2, keyWasPressed, keyIsDown, gamepadWasPressed, gamepadStick,
     clamp, sign } = LittleJS;
 
 import TextPopup from "../TextPopup.js";
@@ -166,7 +166,7 @@ class Player extends EngineObject {
         this.actionPressed   = keyWasPressed("KeyX") || keyWasPressed("KeyV") || keyWasPressed("KeyM") || gamepadWasPressed(1);
 
         if(this.canMove()){
-            this.moveInput = isUsingGamepad ? gamepadStick(0) : 
+            this.moveInput = LittleJS.isUsingGamepad ? gamepadStick(0) : 
                 vec2(keyIsDown("ArrowRight") - keyIsDown("ArrowLeft"), 
                 keyIsDown("ArrowUp") - keyIsDown("ArrowDown"));
         }
