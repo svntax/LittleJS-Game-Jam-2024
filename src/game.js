@@ -199,9 +199,9 @@ function spawnEnemies(){
         enemySpawnPoints[i] = {
             "spawnPosition": enemySpawn
         };
-        let spawnDelay = 1.5;
+        let spawnDelay = 3;
         if(player.isDead){
-            spawnDelay = 4;
+            spawnDelay = 5.5;
         }
         enemy.setSpawnTime(spawnDelay + i*1.5);
     }
