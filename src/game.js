@@ -47,6 +47,7 @@ let levelCompletePoints = 5000;
 const bonusLifeTiers = [10000, 20000, 40000, 60000, 100000];
 let currentBonusLifeIndex = 0;
 let highScore = 0;
+let scoreForBonus = 0;
 let currentLevel = 1;
 let enemySpawnPoints = [];
 let currentLevelData = {};
@@ -93,6 +94,7 @@ function startGame(){
     playTransition(0.25);
 
     score = 0;
+    scoreForBonus = 0;
     lives = 2;
     currentLevel = 1;
     enemySpawnPoints = [];
@@ -181,12 +183,16 @@ export function addScore(amount){
         highScore = score;
     }
     // Bonus life calculation
-    if(score >= bonusLifeTiers[currentBonusLifeIndex]){
+    scoreForBonus += amount;
+    const scoreRequiredForBonus = bonusLifeTiers[currentBonusLifeIndex]
+    if(scoreForBonus >= scoreRequiredForBonus){
         lives++;
         bonusLifeSound.play();
+        
         currentBonusLifeIndex++;
         if(currentBonusLifeIndex >= bonusLifeTiers.length){
             currentBonusLifeIndex = bonusLifeTiers.length - 1;
+            scoreForBonus -= scoreRequiredForBonus;
         }
     }
 }
@@ -308,6 +314,7 @@ function gameUpdate(){
         if(!gameOverTimer.active()){
             LittleJS.engineObjectsDestroy();
             score = 0;
+            scoreForBonus = 0;
             playTransition(0.25);
             gameState = State.TITLE;
         }
