@@ -19,9 +19,9 @@ class TextPopup extends EngineObject {
 
     render(){
         const textPos = this.pos.add(this.offset);
-        LittleJS.drawText(this.text, textPos, 0.5, this.color, 0, LittleJS.WHITE, "center", "PressStart2P");
-        LittleJS.drawText(this.text, textPos.add(vec2(-roomWidthInTiles, 0)), 0.5, this.color, 0, LittleJS.WHITE, "center", "PressStart2P");
-        LittleJS.drawText(this.text, textPos.add(vec2(roomWidthInTiles, 0)), 0.5, this.color, 0, LittleJS.WHITE, "center", "PressStart2P");
+        LittleJS.drawText(this.text, textPos, 0.5, this.color, 0, LittleJS.WHITE, "center", "PressStart2P", undefined, LittleJS.overlayContext);
+        LittleJS.drawText(this.text, textPos.add(vec2(-roomWidthInTiles, 0)), 0.5, this.color, 0, LittleJS.WHITE, "center", "PressStart2P", undefined, LittleJS.overlayContext);
+        LittleJS.drawText(this.text, textPos.add(vec2(roomWidthInTiles, 0)), 0.5, this.color, 0, LittleJS.WHITE, "center", "PressStart2P", undefined, LittleJS.overlayContext);
     }
 
     update(){

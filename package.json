@@ -12,6 +12,6 @@
     "vite": "^6.0.2"
   },
   "dependencies": {
-    "littlejsengine": "^1.10.7"
+    "littlejsengine": "^1.11.2"
   }
 }
