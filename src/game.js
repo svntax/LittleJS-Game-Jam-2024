@@ -412,7 +412,7 @@ function gameRenderPost(){
 
     // Black transition screen
     if(showingTransition){
-        LittleJS.drawRect(vec2(128, 112), vec2(256+8, 224), LittleJS.BLACK, 0, false, true, LittleJS.overlayContext);
+        LittleJS.drawRect(vec2(128, 112), vec2(256+8, 232), LittleJS.BLACK, 0, false, true, LittleJS.overlayContext);
     }
 
     if(LittleJS.paused){
