@@ -57,6 +57,9 @@ class State {
     static get TITLE(){
         return "TITLE";
     }
+    static get INSTRUCTIONS(){
+        return "INSTRUCTIONS";
+    }
     static get GAMEPLAY(){
         return "GAMEPLAY";
     }
@@ -84,6 +87,14 @@ function gameInit(){
 
     // enable gravity
     LittleJS.setGravity(-.0375);
+}
+
+function showInstructionsScreen(){
+    startGameSound.play();
+    gameState = State.INSTRUCTIONS;
+    LittleJS.engineObjectsDestroy();
+
+    playTransition(0.5);
 }
 
 function startGame(){
@@ -295,12 +306,23 @@ function gameUpdate(){
     }
 
     const startPressed = keyWasPressed("Enter") || gamepadWasPressed(9);
+    const jumpPressed  = keyWasPressed("Space") || keyWasPressed("KeyZ") || keyWasPressed("KeyC") || keyWasPressed("KeyN") || gamepadWasPressed(0);
 
     if(gameState === State.TITLE){
         LittleJS.setCameraPos(vec2(0, 0));
-        const jumpPressed  = keyWasPressed("Space") || keyWasPressed("KeyZ") || keyWasPressed("KeyC") || keyWasPressed("KeyN") || gamepadWasPressed(0);
         if(jumpPressed || startPressed){
-            startGame();
+            if(!showingTransition){
+                showInstructionsScreen();
+            }
+        }
+    }
+
+    if(gameState === State.INSTRUCTIONS){
+        LittleJS.setCameraPos(vec2(0, 0));
+        if(jumpPressed || startPressed){
+            if(!showingTransition){
+                startGame();
+            }
         }
     }
 
@@ -346,7 +368,7 @@ function gameUpdatePost(){
 ///////////////////////////////////////////////////////////////////////////////
 function gameRender(){
     let currentBgColor = bgColor;
-    if(gameState === State.TITLE){
+    if(gameState === State.TITLE || gameState === State.INSTRUCTIONS){
         currentBgColor = LittleJS.BLACK;
     }
     LittleJS.drawRect(vec2(128, 112), vec2(256+8, 224+8), currentBgColor, 0, false, true);
@@ -368,27 +390,49 @@ function gameRender(){
         LittleJS.drawTile(vec2(2.75, -2), vec2(2, 1), leopardTileInfo, LittleJS.WHITE, 0, true);
         LittleJS.drawTile(vec2(-2.75, -2), vec2(2, 1), leopardTileInfo.frame(3), LittleJS.WHITE, 0);
     }
+    else if(gameState === State.INSTRUCTIONS){
+        const smallGorillaTileInfo = LittleJS.tile(0, 16, 2);
+        LittleJS.drawTile(vec2(1, 3.5), vec2(1), smallGorillaTileInfo);
+
+        const homeNestTileInfo = LittleJS.tile(8, vec2(32, 16), 0);
+        LittleJS.drawTile(vec2(1, 2), vec2(2, 1), homeNestTileInfo);
+        LittleJS.drawTile(vec2(1, 1), vec2(2, 1), LittleJS.tile(12, vec2(32, 16), 0));
+        LittleJS.drawTile(vec2(1, 2.125), vec2(2, 1), homeNestTileInfo.frame(1), );
+
+        const leopardTileInfo = LittleJS.tile(2, vec2(32, 16), 3);
+        LittleJS.drawTile(vec2(1.5, -2), vec2(2, 1), leopardTileInfo, LittleJS.WHITE, 0, true);
+        LittleJS.drawTile(vec2(4, -2), vec2(2, 1), leopardTileInfo.frame(1), LittleJS.WHITE, 0);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 function gameRenderPost(){
     // draw to overlay canvas for hud rendering
-    const drawText = (text, x, y, size=8, textAlign="left") =>
+    const drawText = (text, x, y, size=8, textAlign="left", textColor="#fff") =>
     {
         LittleJS.overlayContext.textAlign = textAlign;
         LittleJS.overlayContext.textBaseline = "top";
         LittleJS.overlayContext.font = size + "px 'PressStart2P'";
-        LittleJS.overlayContext.fillStyle = "#fff";
+        LittleJS.overlayContext.fillStyle = textColor;
         LittleJS.overlayContext.fillText(text, x, y);
     }
     // Score GUI
-    drawText("1P", 16, 8);
-    drawText(score, 96, 8, 8, "right");
-    drawText("TOP", LittleJS.overlayCanvas.width - 104, 8, 8, "left");
-    drawText(highScore, LittleJS.overlayCanvas.width - 16, 8, 8, "right");
+    if(gameState !== State.INSTRUCTIONS){
+        drawText("1P", 16, 8);
+        drawText(score, 96, 8, 8, "right");
+        drawText("TOP", LittleJS.overlayCanvas.width - 104, 8, 8, "left");
+        drawText(highScore, LittleJS.overlayCanvas.width - 16, 8, 8, "right");
+    }
 
     if(gameState === State.TITLE){
         drawText("PUSH START BUTTON", LittleJS.overlayCanvas.width / 2, LittleJS.overlayCanvas.height - 48, 8, "center");
+    }
+    else if(gameState === State.INSTRUCTIONS){
+        drawText("GORILLAS ARE ENDANGERED!", LittleJS.overlayCanvas.width / 2, 20, 8, "center", "#e8ea4a");
+        drawText("HELP THE LOST    AND CARRY", 24, 56, 8, "left");
+        drawText("THEM BACK TO      SAFELY!", 24, 84, 8, "left");
+
+        drawText("WATCH OUT FOR", 24, 140, 8, "left");
     }
     else if(gameState === State.GAMEPLAY){
         // Level complete GUI
